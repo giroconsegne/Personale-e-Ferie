@@ -1,30 +1,13 @@
 import React, { useState } from 'react';
 import Avatar from './Avatar';
-import Select from './Select';
 import ScrollArea from './ScrollArea';
-import { REPARTI, repartoDi, slugReparto } from '../costanti';
+import { repartoDi, slugReparto } from '../costanti';
 import { giorniDelPeriodo, raggruppaInPeriodi, etichettaPeriodo } from '../date';
 
-const OPZIONI_REPARTO = REPARTI.map(r => ({
-  valore: r,
-  etichetta: r,
-  classe: `rep-${slugReparto(r)}`
-}));
-
-export default function FerieSection({
-  dipendenti,
-  ferie,
-  setFerie,
-  setDipendenti,
-  eliminaDipendente,
-  cambiaReparto,
-  giorniChiusura
-}) {
+export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
   const [dal, setDal] = useState('');
   const [al, setAl] = useState('');
-  const [editingGiorni, setEditingGiorni] = useState(null);
-  const [editingGiorniValue, setEditingGiorniValue] = useState('');
 
   // Il periodo va da "dal" a "al"; se "al" è vuoto vale il solo giorno iniziale
   const fine = al || dal;
@@ -60,26 +43,10 @@ export default function FerieSection({
     });
   };
 
-  // Modifica dei giorni di ferie spettanti
-  const startEditGiorni = (dip) => {
-    setEditingGiorni(dip.id);
-    setEditingGiorniValue(dip.giorni_ferie.toString());
-  };
-
-  const saveEditGiorni = () => {
-    const nuovo = parseInt(editingGiorniValue, 10);
-    if (!isNaN(nuovo) && nuovo > 0) {
-      setDipendenti(
-        dipendenti.map(d => (d.id === editingGiorni ? { ...d, giorni_ferie: nuovo } : d))
-      );
-    }
-    setEditingGiorni(null);
-  };
-
-  // Rimuove il dipendente e chiude il pannello se era quello aperto
-  const handleElimina = (id) => {
-    if (selectedDipendente === id) setSelectedDipendente(null);
-    eliminaDipendente(id);
+  const apriChiudi = (id) => {
+    setSelectedDipendente(id === selectedDipendente ? null : id);
+    setDal('');
+    setAl('');
   };
 
   const dipSelezionato = dipendenti.find(d => d.id === selectedDipendente);
@@ -90,7 +57,7 @@ export default function FerieSection({
       <div className="card-head">
         <div>
           <h2>Ferie</h2>
-          <p className="card-sub">Giorni spettanti, goduti e residui per ogni persona</p>
+          <p className="card-sub">Tocca una persona per inserire o togliere i suoi giorni</p>
         </div>
       </div>
 
@@ -98,7 +65,7 @@ export default function FerieSection({
         <div className="vuoto">
           <div className="vuoto-icona">🏖️</div>
           <p className="vuoto-titolo">Nessun dipendente</p>
-          <p className="vuoto-testo">Aggiungine uno dal menu per iniziare a segnare le ferie.</p>
+          <p className="vuoto-testo">Aggiungine uno da Impostazioni per iniziare a segnare le ferie.</p>
         </div>
       ) : (
         <>
@@ -111,7 +78,7 @@ export default function FerieSection({
                   <th>Spettanti</th>
                   <th>Godute</th>
                   <th>Residue</th>
-                  <th className="col-azioni">Azioni</th>
+                  <th className="col-freccia" aria-label="Apri" />
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +91,20 @@ export default function FerieSection({
                   const reparto = repartoDi(dip);
 
                   return (
-                    <tr key={dip.id} className={attivo ? 'riga-attiva' : ''}>
+                    <tr
+                      key={dip.id}
+                      className={`riga-apribile ${attivo ? 'riga-attiva' : ''}`}
+                      onClick={() => apriChiudi(dip.id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={attivo}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          apriChiudi(dip.id);
+                        }
+                      }}
+                    >
                       <td className="col-nome">
                         <div className="persona">
                           <Avatar nome={dip.nome} />
@@ -138,57 +118,17 @@ export default function FerieSection({
                       </td>
 
                       <td>
-                        <Select
-                          valore={reparto}
-                          opzioni={OPZIONI_REPARTO}
-                          onChange={(v) => cambiaReparto(dip.id, v)}
-                          classe={`pillola rep-${slugReparto(reparto)}`}
-                          etichettaAria={`Reparto di ${dip.nome}`}
-                        />
+                        <span className={`pill-reparto rep-${slugReparto(reparto)}`}>{reparto}</span>
                       </td>
 
-                      <td>
-                        {editingGiorni === dip.id ? (
-                          <div className="edit-giorni">
-                            <input
-                              type="number"
-                              value={editingGiorniValue}
-                              onChange={(e) => setEditingGiorniValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditGiorni();
-                                if (e.key === 'Escape') setEditingGiorni(null);
-                              }}
-                              min="1"
-                              autoFocus
-                            />
-                            <button className="btn btn-ok btn-icona" onClick={saveEditGiorni} title="Salva">✓</button>
-                            <button className="btn btn-muto btn-icona" onClick={() => setEditingGiorni(null)} title="Annulla">✕</button>
-                          </div>
-                        ) : (
-                          <button className="valore-modificabile" onClick={() => startEditGiorni(dip)} title="Clicca per modificare">
-                            {dip.giorni_ferie}
-                            <span className="matita">✎</span>
-                          </button>
-                        )}
-                      </td>
-
+                      <td><span className="num num-neutro">{dip.giorni_ferie}</span></td>
                       <td><span className="num num-usate">{usate}</span></td>
                       <td>
                         <span className={`num ${rimaste === 0 ? 'num-zero' : 'num-ok'}`}>{rimaste}</span>
                       </td>
 
-                      <td className="col-azioni">
-                        <div className="azioni">
-                          <button
-                            className={`btn ${attivo ? 'btn-ok' : 'btn-secondario'}`}
-                            onClick={() => setSelectedDipendente(attivo ? null : dip.id)}
-                          >
-                            {attivo ? 'Chiudi' : 'Gestisci'}
-                          </button>
-                          <button className="btn btn-fantasma-rosso" onClick={() => handleElimina(dip.id)}>
-                            Elimina
-                          </button>
-                        </div>
+                      <td className="col-freccia">
+                        <span className={`freccia-riga ${attivo ? 'aperta' : ''}`} aria-hidden="true">›</span>
                       </td>
                     </tr>
                   );

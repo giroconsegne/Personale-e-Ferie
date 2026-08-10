@@ -3,6 +3,7 @@ import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
 import CalendarioSection from './components/CalendarioSection';
+import ImpostazioniSection from './components/ImpostazioniSection';
 import {
   GIORNI,
   GIORNI_LABEL,
@@ -118,11 +119,6 @@ function App() {
     if (isMobile()) setSidebarOpen(false);
   };
 
-  const apriPannello = (setter) => {
-    setter(true);
-    if (isMobile()) setSidebarOpen(false);
-  };
-
   const labelDiChiusura = giorniChiusura
     .map(g => GIORNI_LABEL[GIORNI.indexOf(g)])
     .filter(Boolean);
@@ -173,11 +169,14 @@ function App() {
             <span className="nav-text">Calendario</span>
           </button>
 
-          <p className="nav-label">Impostazioni</p>
-          <button className="nav-item" onClick={() => apriPannello(setShowGiorniDrawer)}>
-            <span className="nav-icon">🚫</span>
-            <span className="nav-text">Giorni di chiusura</span>
-            {giorniChiusura.length > 0 && <span className="nav-conteggio">{giorniChiusura.length}</span>}
+          <div className="nav-divisore" />
+
+          <button
+            className={`nav-item ${activeSection === 'impostazioni' ? 'active' : ''}`}
+            onClick={() => vaiA('impostazioni')}
+          >
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-text">Impostazioni</span>
           </button>
         </nav>
 
@@ -193,10 +192,6 @@ function App() {
               ))}
             </ul>
           )}
-
-          <button className="btn btn-primario btn-blocco" onClick={() => apriPannello(setShowAddDrawer)}>
-            <span>＋</span> Aggiungi dipendente
-          </button>
         </div>
       </aside>
 
@@ -246,9 +241,6 @@ function App() {
               dipendenti={dipendenti}
               ferie={ferie}
               setFerie={setFerie}
-              setDipendenti={setDipendenti}
-              eliminaDipendente={eliminaDipendente}
-              cambiaReparto={cambiaReparto}
               giorniChiusura={giorniChiusura}
             />
           )}
@@ -258,6 +250,19 @@ function App() {
               dipendenti={dipendenti}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
+            />
+          )}
+
+          {activeSection === 'impostazioni' && (
+            <ImpostazioniSection
+              dipendenti={dipendenti}
+              setDipendenti={setDipendenti}
+              ferie={ferie}
+              eliminaDipendente={eliminaDipendente}
+              cambiaReparto={cambiaReparto}
+              giorniChiusura={giorniChiusura}
+              apriAggiungiDipendente={() => setShowAddDrawer(true)}
+              apriGiorniChiusura={() => setShowGiorniDrawer(true)}
             />
           )}
         </main>
