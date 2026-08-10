@@ -1,0 +1,414 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+.header {
+  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.header p {
+  font-size: 1.1em;
+  opacity: 0.9;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.section h2 {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  color: #d32f2f;
+  border-bottom: 3px solid #d32f2f;
+  padding-bottom: 12px;
+}
+
+.section h3 {
+  font-size: 1.3em;
+  margin: 20px 0 15px;
+  color: #333;
+}
+
+.section h4 {
+  font-size: 1.1em;
+  margin: 15px 0 10px;
+  color: #555;
+}
+
+/* Add Dipendente Section */
+.add-dipendente {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #d32f2f;
+}
+
+button {
+  padding: 12px 24px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background: #c62828;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.btn-delete {
+  background: #f44336;
+  padding: 8px 12px;
+  font-size: 0.85em;
+}
+
+.btn-delete:hover {
+  background: #e53935;
+}
+
+.btn-save {
+  background: #4caf50;
+  padding: 8px 12px;
+  font-size: 0.85em;
+}
+
+.btn-save:hover {
+  background: #45a049;
+}
+
+.btn-cancel {
+  background: #999;
+  padding: 8px 12px;
+  font-size: 0.85em;
+}
+
+.btn-cancel:hover {
+  background: #777;
+}
+
+.btn-remove {
+  background: #f44336;
+  padding: 6px 10px;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+.btn-remove:hover {
+  background: #e53935;
+}
+
+.info {
+  color: #666;
+  font-size: 0.95em;
+  margin-top: 10px;
+}
+
+.empty {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Turni Table */
+.turni-table-container,
+.ferie-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+th {
+  background: #f5f5f5;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+tr:hover {
+  background: #fafafa;
+}
+
+.nome-dipendente {
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+th.chiuso,
+td.chiuso {
+  background: #fff3e0;
+}
+
+.closed-badge {
+  display: inline-block;
+  background: #ff9800;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  margin-left: 5px;
+}
+
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9em;
+  background: white;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+}
+
+select:disabled {
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Giorni Chiusura */
+.giorni-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+
+.checkbox-label:hover {
+  background: #f5f5f5;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Ferie Section */
+.add-ferie {
+  margin-bottom: 20px;
+}
+
+.add-ferie input[type="date"] {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1em;
+}
+
+.ferie-list {
+  margin-top: 20px;
+}
+
+.ferie-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.ferie-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.ferie-item span {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Ferie Detail */
+.ferie-detail {
+  background: #fafafa;
+  border-left: 4px solid #d32f2f;
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 25px;
+}
+
+.ferie-detail h3 {
+  color: #d32f2f;
+  margin-top: 0;
+}
+
+/* Edit Giorni */
+.edit-giorni {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-giorni input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.clickable {
+  cursor: pointer;
+  color: #d32f2f;
+  font-weight: 600;
+  transition: opacity 0.3s;
+}
+
+.clickable:hover {
+  opacity: 0.7;
+}
+
+.edit-hint {
+  display: inline-block;
+  font-size: 0.75em;
+  color: #999;
+  margin-left: 5px;
+  font-weight: normal;
+}
+
+.used {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.zero {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.remaining {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+button.active {
+  background: #4caf50;
+}
+
+button.active:hover {
+  background: #45a049;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 1.8em;
+  }
+
+  .header p {
+    font-size: 0.95em;
+  }
+
+  .section {
+    padding: 20px;
+  }
+
+  .giorni-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  table {
+    font-size: 0.85em;
+  }
+
+  th, td {
+    padding: 10px;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  button {
+    padding: 10px 16px;
+    font-size: 0.9em;
+  }
+}
