@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Avatar from './Avatar';
+import DatePicker from './DatePicker';
 import ScrollArea from './ScrollArea';
 import { repartoDi, slugReparto } from '../costanti';
 import {
@@ -176,28 +177,33 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
               </div>
 
               <div className="periodo-form">
-                <label className="campo-data">
+                <div className="campo-data">
                   <span className="campo-label">Dal</span>
-                  <input
-                    type="date"
-                    value={dal}
+                  <DatePicker
+                    valore={dal}
+                    onChange={setDal}
                     min={`${anno}-01-01`}
                     max={`${anno}-12-31`}
-                    onChange={(e) => setDal(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
+                    giorniChiusura={giorniChiusura}
+                    ferieEsistenti={giorniSelezionato}
+                    placeholder="Scegli il giorno"
+                    etichettaAria="Data iniziale del periodo"
                   />
-                </label>
-                <label className="campo-data">
+                </div>
+                <div className="campo-data">
                   <span className="campo-label">Al <em>(facoltativo)</em></span>
-                  <input
-                    type="date"
-                    value={al}
+                  <DatePicker
+                    valore={al}
+                    onChange={setAl}
                     min={dal || `${anno}-01-01`}
                     max={`${anno}-12-31`}
-                    onChange={(e) => setAl(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
+                    giorniChiusura={giorniChiusura}
+                    ferieEsistenti={giorniSelezionato}
+                    inizioIntervallo={dal || null}
+                    placeholder="Un solo giorno"
+                    etichettaAria="Data finale del periodo"
                   />
-                </label>
+                </div>
                 <button
                   className="btn btn-primario"
                   onClick={aggiungiPeriodo}

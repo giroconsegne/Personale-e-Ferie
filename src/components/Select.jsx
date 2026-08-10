@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import usePosizionePopup, { stilePopup } from '../usePosizionePopup';
 
 const ALTEZZA_OPZIONE = 40;
 
@@ -11,7 +12,6 @@ const ALTEZZA_OPZIONE = 40;
 export default function Select({ valore, opzioni, onChange, classe = '', etichettaAria }) {
   const [aperto, setAperto] = useState(false);
   const [evidenziato, setEvidenziato] = useState(0);
-  const [pos, setPos] = useState(null);
 
   const triggerRef = useRef(null);
   const popupRef = useRef(null);
@@ -19,34 +19,15 @@ export default function Select({ valore, opzioni, onChange, classe = '', etichet
   const indiceCorrente = Math.max(0, opzioni.findIndex(o => o.valore === valore));
   const corrente = opzioni[indiceCorrente] || opzioni[0];
 
-  const calcolaPosizione = useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
+  const soloChiudi = useCallback(() => setAperto(false), []);
 
-    // se il pulsante esce dallo schermo chiudo invece di lasciare la lista sospesa
-    if (r.bottom < 0 || r.top > window.innerHeight) {
-      setAperto(false);
-      return;
-    }
-
-    const altezzaLista = Math.min(opzioni.length * ALTEZZA_OPZIONE + 10, 260);
-    const spazioSotto = window.innerHeight - r.bottom;
-    const versoAlto = spazioSotto < altezzaLista + 12 && r.top > spazioSotto;
-    const larghezza = Math.max(r.width, 150);
-    const left = Math.min(r.left, window.innerWidth - larghezza - 8);
-
-    setPos({
-      left: Math.max(8, left),
-      larghezza,
-      top: versoAlto ? null : r.bottom + 6,
-      bottom: versoAlto ? window.innerHeight - r.top + 6 : null
-    });
-  }, [opzioni.length]);
-
-  useLayoutEffect(() => {
-    if (aperto) calcolaPosizione();
-  }, [aperto, calcolaPosizione]);
+  const pos = usePosizionePopup({
+    aperto,
+    ancoraRef: triggerRef,
+    popupRef,
+    altezzaStimata: Math.min(opzioni.length * ALTEZZA_OPZIONE + 10, 260),
+    chiudi: soloChiudi
+  });
 
   useEffect(() => {
     if (!aperto) return;
@@ -56,20 +37,10 @@ export default function Select({ valore, opzioni, onChange, classe = '', etichet
       if (popupRef.current?.contains(e.target)) return;
       setAperto(false);
     };
-    const suScroll = (e) => {
-      if (popupRef.current?.contains(e.target)) return;
-      calcolaPosizione();
-    };
 
     document.addEventListener('pointerdown', suClickFuori);
-    window.addEventListener('scroll', suScroll, true);
-    window.addEventListener('resize', calcolaPosizione);
-    return () => {
-      document.removeEventListener('pointerdown', suClickFuori);
-      window.removeEventListener('scroll', suScroll, true);
-      window.removeEventListener('resize', calcolaPosizione);
-    };
-  }, [aperto, calcolaPosizione]);
+    return () => document.removeEventListener('pointerdown', suClickFuori);
+  }, [aperto]);
 
   useEffect(() => {
     if (aperto) popupRef.current?.focus();
@@ -147,11 +118,7 @@ export default function Select({ valore, opzioni, onChange, classe = '', etichet
           tabIndex={-1}
           aria-activedescendant={`opz-${evidenziato}`}
           onKeyDown={suTastoLista}
-          style={{
-            left: pos.left,
-            width: pos.larghezza,
-            ...(pos.top !== null ? { top: pos.top } : { bottom: pos.bottom })
-          }}
+          style={stilePopup(pos)}
         >
           {opzioni.map((o, i) => (
             <div
