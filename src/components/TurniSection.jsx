@@ -23,9 +23,9 @@ export default function TurniSection({ dipendenti, turni, setTurni, giorni, gior
               <tr>
                 <th>Dipendente</th>
                 {giorniLabel.map((g, idx) => (
-                  <th key={idx} className={giorniChiusura.includes(g.toLowerCase()) ? 'chiuso' : ''}>
+                  <th key={idx} className={giorniChiusura.includes(giorni[idx]) ? 'chiuso' : ''}>
                     {g}
-                    {giorniChiusura.includes(g.toLowerCase()) && <span className="closed-badge">CHIUSO</span>}
+                    {giorniChiusura.includes(giorni[idx]) && <span className="closed-badge">CHIUSO</span>}
                   </th>
                 ))}
               </tr>

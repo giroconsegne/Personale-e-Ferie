@@ -1,35 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import TurniSection from './components/TurniSection';
-import GiorniChiusuraSection from './components/GiorniChiusuraSection';
 import FerieSection from './components/FerieSection';
 
+const GIORNI = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+const GIORNI_LABEL = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+
+const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+const STORAGE_KEY = 'pizzeriaApp';
+
+// Letto una sola volta al caricamento della pagina: lo stato parte già
+// dai dati salvati, così il salvataggio automatico non può sovrascriverli.
+const salvato = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+})();
+
 function App() {
-  const [dipendenti, setDipendenti] = useState([]);
-  const [turni, setTurni] = useState({});
-  const [ferie, setFerie] = useState({});
-  const [giorniChiusura, setGiorniChiusura] = useState([]);
+  const [dipendenti, setDipendenti] = useState(salvato.dipendenti || []);
+  const [turni, setTurni] = useState(salvato.turni || {});
+  const [ferie, setFerie] = useState(salvato.ferie || {});
+  const [giorniChiusura, setGiorniChiusura] = useState(salvato.giorniChiusura || []);
   const [nuovoDipendente, setNuovoDipendente] = useState('');
   const [showAddDrawer, setShowAddDrawer] = useState(false);
-  const [showGiorniModal, setShowGiorniModal] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const [activeSection, setActiveSection] = useState('turni');
 
-  // Carica dati da localStorage
+  // Salva i dati a ogni modifica
   useEffect(() => {
-    const saved = localStorage.getItem('pizzeriaApp');
-    if (saved) {
-      const data = JSON.parse(saved);
-      setDipendenti(data.dipendenti || []);
-      setTurni(data.turni || {});
-      setFerie(data.ferie || {});
-      setGiorniChiusura(data.giorniChiusura || []);
-    }
-  }, []);
-
-  // Salva dati su localStorage
-  useEffect(() => {
-    localStorage.setItem('pizzeriaApp', JSON.stringify({
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
       dipendenti,
       turni,
       ferie,
@@ -37,26 +41,39 @@ function App() {
     }));
   }, [dipendenti, turni, ferie, giorniChiusura]);
 
+  // Esc chiude i pannelli aperti
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      setShowAddDrawer(false);
+      setShowGiorniDrawer(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   // Aggiungi dipendente
   const aggiungiDipendente = () => {
-    if (nuovoDipendente.trim()) {
-      const newId = Date.now().toString();
-      setDipendenti([...dipendenti, { id: newId, nome: nuovoDipendente, giorni_ferie: 20 }]);
-      setTurni({
-        ...turni,
-        [newId]: {
-          lunedi: 'Mattina',
-          martedi: 'Mattina',
-          mercoledi: 'Mattina',
-          giovedi: 'Mattina',
-          venerdi: 'Mattina',
-          sabato: 'Sera',
-          domenica: 'Riposo'
-        }
-      });
-      setFerie({ ...ferie, [newId]: [] });
-      setNuovoDipendente('');
-    }
+    const nome = nuovoDipendente.trim();
+    if (!nome) return;
+
+    const newId = Date.now().toString();
+    setDipendenti([...dipendenti, { id: newId, nome, giorni_ferie: 20 }]);
+    setTurni({
+      ...turni,
+      [newId]: {
+        lunedi: 'Mattina',
+        martedi: 'Mattina',
+        mercoledi: 'Mattina',
+        giovedi: 'Mattina',
+        venerdi: 'Mattina',
+        sabato: 'Sera',
+        domenica: 'Riposo'
+      }
+    });
+    setFerie({ ...ferie, [newId]: [] });
+    setNuovoDipendente('');
+    setShowAddDrawer(false);
   };
 
   // Elimina dipendente
@@ -70,42 +87,58 @@ function App() {
     setFerie(newFerie);
   };
 
-  const giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
-  const giorniLabel = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+  const toggleGiornoChiusura = (giorno) => {
+    setGiorniChiusura(
+      giorniChiusura.includes(giorno)
+        ? giorniChiusura.filter(g => g !== giorno)
+        : [...giorniChiusura, giorno]
+    );
+  };
+
+  // Su mobile il menu si richiude dopo la scelta
+  const vaiA = (sezione) => {
+    setActiveSection(sezione);
+    if (isMobile()) setSidebarOpen(false);
+  };
+
+  const labelDiChiusura = giorniChiusura
+    .map(g => GIORNI_LABEL[GIORNI.indexOf(g)])
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <div className="app">
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <h1>🍕 Pizzeria</h1>
+          <h1>Pizzeria</h1>
           <button
             className="sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            title={sidebarOpen ? 'Chiudi' : 'Apri'}
+            onClick={() => setSidebarOpen(false)}
+            title="Chiudi menu"
           >
-            {sidebarOpen ? '◀' : '▶'}
+            ◀
           </button>
         </div>
 
         <nav className="sidebar-nav">
           <button
             className={`nav-item ${activeSection === 'turni' ? 'active' : ''}`}
-            onClick={() => setActiveSection('turni')}
+            onClick={() => vaiA('turni')}
           >
             <span className="nav-icon">📅</span>
             <span className="nav-text">Turni</span>
           </button>
           <button
             className={`nav-item ${activeSection === 'ferie' ? 'active' : ''}`}
-            onClick={() => setActiveSection('ferie')}
+            onClick={() => vaiA('ferie')}
           >
             <span className="nav-icon">🏖️</span>
             <span className="nav-text">Ferie</span>
           </button>
           <button
-            className={`nav-item ${showGiorniModal ? 'active' : ''}`}
-            onClick={() => setShowGiorniModal(!showGiorniModal)}
+            className={`nav-item ${showGiorniDrawer ? 'active' : ''}`}
+            onClick={() => setShowGiorniDrawer(true)}
           >
             <span className="nav-icon">🚫</span>
             <span className="nav-text">Giorni Chiusi</span>
@@ -122,118 +155,121 @@ function App() {
         <div className="sidebar-footer">
           <p className="dipendenti-count">
             <span className="icon">👥</span>
-            <span className="text">{dipendenti.length} dipendenti</span>
+            <span className="text">
+              {dipendenti.length} {dipendenti.length === 1 ? 'dipendente' : 'dipendenti'}
+            </span>
           </p>
         </div>
-
-        {/* Giorni Chiusura Dropdown nel Sidebar */}
-        {showGiorniModal && (
-          <div className="giorni-dropdown sidebar-dropdown">
-            <h3>Giorni di Chiusura</h3>
-            <div className="dropdown-grid">
-              {giorniLabel.map((giorno, idx) => (
-                <label key={idx} className="checkbox-label dropdown-item">
-                  <input
-                    type="checkbox"
-                    checked={giorniChiusura.includes(giorno.toLowerCase())}
-                    onChange={() => {
-                      if (giorniChiusura.includes(giorno.toLowerCase())) {
-                        setGiorniChiusura(giorniChiusura.filter(g => g !== giorno.toLowerCase()));
-                      } else {
-                        setGiorniChiusura([...giorniChiusura, giorno.toLowerCase()]);
-                      }
-                    }}
-                  />
-                  <span>{giorno}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
       </aside>
+
+      {/* Overlay del menu (solo mobile, via CSS) */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
 
       <div className="main-wrapper">
         <header className="header">
           <button
             className="menu-toggle"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            title={sidebarOpen ? 'Chiudi menu' : 'Apri menu'}
+            title="Apri menu"
           >
             ☰
           </button>
-          <h1>🍕 Gestione Pizzeria</h1>
-          <div style={{ width: '40px' }}></div>
+          <h1>Gestione Pizzeria</h1>
+          <div className="header-spacer" />
         </header>
 
         <main className="container">
           {activeSection === 'turni' && (
-            <>
-              <TurniSection
-                dipendenti={dipendenti}
-                turni={turni}
-                setTurni={setTurni}
-                giorni={giorni}
-                giorniLabel={giorniLabel}
-                giorniChiusura={giorniChiusura}
-              />
-            </>
+            <TurniSection
+              dipendenti={dipendenti}
+              turni={turni}
+              setTurni={setTurni}
+              giorni={GIORNI}
+              giorniLabel={GIORNI_LABEL}
+              giorniChiusura={giorniChiusura}
+            />
           )}
 
           {activeSection === 'ferie' && (
-            <>
-              <FerieSection
-                dipendenti={dipendenti}
-                ferie={ferie}
-                setFerie={setFerie}
-                setDipendenti={setDipendenti}
-                eliminaDipendente={eliminaDipendente}
-              />
-            </>
+            <FerieSection
+              dipendenti={dipendenti}
+              ferie={ferie}
+              setFerie={setFerie}
+              setDipendenti={setDipendenti}
+              eliminaDipendente={eliminaDipendente}
+            />
           )}
         </main>
       </div>
 
-      {/* Overlay */}
-      {showAddDrawer && (
-        <div
-          className="drawer-overlay"
-          onClick={() => setShowAddDrawer(false)}
-        />
+      {/* Pannello Giorni di Chiusura */}
+      {showGiorniDrawer && (
+        <>
+          <div className="drawer-overlay" onClick={() => setShowGiorniDrawer(false)} />
+          <div className="drawer-bottom open">
+            <div className="drawer-handle" />
+            <div className="drawer-content">
+              <h2>Giorni di Chiusura</h2>
+              <div className="giorni-grid">
+                {GIORNI.map((giorno, idx) => (
+                  <label key={giorno} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={giorniChiusura.includes(giorno)}
+                      onChange={() => toggleGiornoChiusura(giorno)}
+                    />
+                    <span>{GIORNI_LABEL[idx]}</span>
+                  </label>
+                ))}
+              </div>
+              {giorniChiusura.length > 0 && (
+                <p className="info">Giorni chiusi: {labelDiChiusura}</p>
+              )}
+              <button
+                className="drawer-close-btn"
+                onClick={() => setShowGiorniDrawer(false)}
+              >
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Drawer Bottom */}
-      <div className={`drawer-bottom ${showAddDrawer ? 'open' : ''}`}>
-        <div className="drawer-handle" />
-        <div className="drawer-content">
-          <h2>Aggiungi Dipendente</h2>
-          <div className="input-group">
-            <input
-              type="text"
-              value={nuovoDipendente}
-              onChange={(e) => setNuovoDipendente(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  aggiungiDipendente();
-                  setShowAddDrawer(false);
-                }
-              }}
-              placeholder="Nome dipendente..."
-              autoFocus
-            />
-            <button onClick={() => {
-              aggiungiDipendente();
-              setShowAddDrawer(false);
-            }}>Aggiungi</button>
+      {/* Pannello Aggiungi Dipendente */}
+      {showAddDrawer && (
+        <>
+          <div className="drawer-overlay" onClick={() => setShowAddDrawer(false)} />
+          <div className="drawer-bottom open">
+            <div className="drawer-handle" />
+            <div className="drawer-content">
+              <h2>Aggiungi Dipendente</h2>
+              <div className="input-group">
+                <input
+                  type="text"
+                  value={nuovoDipendente}
+                  onChange={(e) => setNuovoDipendente(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
+                  placeholder="Nome dipendente..."
+                  autoFocus
+                />
+                <button onClick={aggiungiDipendente}>Aggiungi</button>
+              </div>
+              <p className="info">
+                In organico: {dipendenti.length} {dipendenti.length === 1 ? 'persona' : 'persone'}
+              </p>
+              <button
+                className="drawer-close-btn"
+                onClick={() => setShowAddDrawer(false)}
+              >
+                Chiudi
+              </button>
+            </div>
           </div>
-          <p className="info">Dipendenti aggiunti: {dipendenti.length}</p>
-          <button
-            className="drawer-close-btn"
-            onClick={() => setShowAddDrawer(false)}
-          >
-            Chiudi
-          </button>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

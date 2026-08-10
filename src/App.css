@@ -1,3 +1,6 @@
+/* ============================================
+   BASE
+   ============================================ */
 * {
   margin: 0;
   padding: 0;
@@ -16,7 +19,9 @@ body {
   display: flex;
 }
 
-/* Sidebar */
+/* ============================================
+   SIDEBAR
+   ============================================ */
 .sidebar {
   width: 280px;
   background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
@@ -27,9 +32,9 @@ body {
   left: 0;
   top: 0;
   overflow-y: auto;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
   box-shadow: 4px 0 20px rgba(15, 23, 42, 0.15);
-  z-index: 50;
+  z-index: 60;
   display: flex;
   flex-direction: column;
 }
@@ -43,7 +48,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 30px;
+  padding: 0 20px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -61,8 +66,8 @@ body {
   height: 36px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.2em;
-  transition: all 0.3s ease;
+  font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .sidebar-toggle:hover {
@@ -73,7 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 0 12px;
+  padding: 20px 12px 0;
   flex: 1;
 }
 
@@ -84,11 +89,12 @@ body {
   padding: 14px 16px;
   background: transparent;
   border: 2px solid transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
   border-radius: 10px;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
+  font-family: inherit;
   transition: all 0.3s ease;
   text-align: left;
 }
@@ -101,12 +107,11 @@ body {
 .nav-item.active {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 .nav-icon {
-  font-size: 1.3em;
+  font-size: 1.25em;
   min-width: 24px;
 }
 
@@ -115,32 +120,30 @@ body {
 }
 
 .add-dipendente-btn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  color: white !important;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
   margin-top: auto;
-  border: none !important;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 .add-dipendente-btn:hover {
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: white;
   transform: translateY(-2px);
-}
-
-.add-dipendente-btn.active {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
 .sidebar-footer {
-  padding: 20px 12px;
+  padding: 20px 12px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
 }
 
 .dipendenti-count {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.95em;
   margin: 0;
   padding: 12px 16px;
@@ -149,83 +152,42 @@ body {
 }
 
 .dipendenti-count .icon {
-  font-size: 1.3em;
+  font-size: 1.2em;
 }
 
-/* Giorni Chiusura nel Sidebar */
-.sidebar-dropdown {
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  transform: none !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  margin: 20px 12px 0 !important;
-  box-shadow: none !important;
-  padding: 16px !important;
-  max-height: 300px;
-  min-width: unset !important;
-  max-width: unset !important;
+/* Overlay del menu: solo su mobile */
+.sidebar-overlay {
+  display: none;
 }
 
-.sidebar-dropdown h3 {
-  color: white;
-  font-size: 0.95em;
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sidebar-dropdown .dropdown-grid {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.sidebar-dropdown .dropdown-item {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.sidebar-dropdown .dropdown-item:hover {
-  border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: white !important;
-}
-
-.sidebar-dropdown .dropdown-item input[type="checkbox"]:checked + span {
-  color: #ef4444;
-}
-
-/* Main Wrapper */
+/* ============================================
+   LAYOUT PRINCIPALE
+   ============================================ */
 .main-wrapper {
   flex: 1;
   margin-left: 280px;
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .sidebar.closed ~ .main-wrapper {
   margin-left: 0;
 }
 
-/* Header */
 .header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
   padding: 20px 30px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .menu-toggle {
-  background: #f1f5f9;
+  background: transparent;
   border: none;
   width: 40px;
   height: 40px;
@@ -233,153 +195,40 @@ body {
   cursor: pointer;
   font-size: 1.3em;
   color: #1f2937;
-  transition: all 0.3s ease;
-  display: none;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .menu-toggle:hover {
-  background: #e2e8f0;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .header h1 {
-  font-size: 1.8em;
+  font-size: 1.6em;
+  font-weight: 700;
   margin: 0;
   flex: 1;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 240px;
-  }
-
-  .main-wrapper {
-    margin-left: 240px;
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    transform: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .sidebar.closed {
-    transform: none;
-    display: none;
-  }
-
-  .main-wrapper {
-    margin-left: 0;
-  }
-
-  .menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .sidebar-header {
-    justify-content: space-between;
-  }
-
-  .sidebar-toggle {
-    display: none;
-  }
-
-  .header {
-    padding: 15px 20px;
-  }
-
-  .header h1 {
-    font-size: 1.4em;
-  }
-}
-
-.header {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
-  color: white;
-  padding: 60px 20px 40px;
-  text-align: center;
-  box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15);
-  position: relative;
-  overflow: hidden;
-}
-
-.header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-}
-
-.header h1 {
-  font-size: 3em;
-  font-weight: 800;
-  margin-bottom: 12px;
-  letter-spacing: -1px;
-  position: relative;
-  z-index: 1;
-}
-
-.header p {
-  font-size: 1.15em;
-  opacity: 0.95;
-  font-weight: 500;
-  position: relative;
-  z-index: 1;
-  margin-bottom: 20px;
-}
-
-.header-select-wrapper {
-  position: relative;
-  z-index: 1;
-}
-
-.header-select {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.95em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-select:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.select-arrow {
-  font-size: 0.8em;
-  transition: transform 0.3s ease;
-}
-
-.header-select.open .select-arrow {
-  transform: rotate(180deg);
+.header-spacer {
+  width: 40px;
+  flex-shrink: 0;
 }
 
 .container {
+  width: 100%;
   max-width: 1200px;
   margin: 40px auto;
   padding: 0 20px;
   flex: 1;
 }
 
+/* ============================================
+   SEZIONI
+   ============================================ */
 .section {
   background: white;
   border-radius: 16px;
@@ -387,30 +236,20 @@ body {
   margin-bottom: 40px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(226, 232, 240, 0.5);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.section:hover {
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
-  transform: translateY(-2px);
 }
 
 .section h2 {
-  font-size: 2em;
+  font-size: 1.8em;
   font-weight: 700;
-  margin-bottom: 30px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: 28px;
+  color: #dc2626;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .section h3 {
-  font-size: 1.4em;
+  font-size: 1.3em;
   font-weight: 700;
   margin: 25px 0 18px;
   color: #1f2937;
@@ -423,36 +262,101 @@ body {
   color: #4b5563;
 }
 
-/* Add Dipendente Section */
-.add-dipendente {
-  background: white;
-  border-radius: 16px;
-  padding: 40px;
-  margin-bottom: 40px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(226, 232, 240, 0.5);
+.info {
+  color: #475569;
+  font-size: 0.95em;
+  font-weight: 500;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
 }
 
-.add-dipendente h2 {
-  font-size: 1.8em;
-  margin-bottom: 24px;
+.empty {
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 1.05em;
 }
 
+/* ============================================
+   BOTTONI
+   ============================================ */
+button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  padding: 8px 14px;
+  font-size: 0.85em;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  padding: 8px 14px;
+  font-size: 0.85em;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  padding: 8px 14px;
+  font-size: 0.85em;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.25);
+}
+
+.btn-remove {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  padding: 6px 12px;
+  font-size: 0.8em;
+  margin-left: 10px;
+}
+
+button.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* ============================================
+   INPUT
+   ============================================ */
 .input-group {
   display: flex;
   gap: 12px;
-  margin-bottom: 18px;
 }
 
 .input-group input {
   flex: 1;
+  min-width: 0;
   padding: 14px 18px;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
   font-size: 1em;
   font-family: inherit;
-  transition: all 0.3s ease;
+  color: #1f2937;
   background: #f8fafc;
+  transition: all 0.25s ease;
 }
 
 .input-group input:focus {
@@ -466,93 +370,35 @@ body {
   color: #94a3b8;
 }
 
-button {
-  padding: 14px 28px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-}
-
-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
-}
-
-button:active {
-  transform: translateY(-1px);
-}
-
-.btn-delete {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  padding: 8px 14px;
-  font-size: 0.85em;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-
-.btn-delete:hover {
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  padding: 8px 14px;
-  font-size: 0.85em;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
-}
-
-.btn-save:hover {
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-cancel {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  padding: 8px 14px;
-  font-size: 0.85em;
-  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
-}
-
-.btn-cancel:hover {
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
-}
-
-.btn-remove {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  padding: 6px 12px;
-  font-size: 0.8em;
-  margin-left: 10px;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-
-.btn-remove:hover {
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.info {
-  color: #64748b;
-  font-size: 0.95em;
-  margin-top: 14px;
-  font-weight: 500;
-  padding: 12px 16px;
-  background: #f1f5f9;
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  border-left: 3px solid #3b82f6;
+  font-size: 0.9em;
+  font-family: inherit;
+  font-weight: 500;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.empty {
+select:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+select:disabled {
+  background: #f1f5f9;
   color: #94a3b8;
-  font-style: italic;
-  text-align: center;
-  padding: 40px 20px;
-  font-size: 1.05em;
+  cursor: not-allowed;
 }
 
-/* Turni Table */
+/* ============================================
+   TABELLE
+   ============================================ */
 .turni-table-container,
 .ferie-table-container {
   overflow-x: auto;
@@ -576,27 +422,23 @@ th {
   border-bottom: 2px solid #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 0.85em;
+  font-size: 0.8em;
+  white-space: nowrap;
 }
 
 td {
   padding: 16px;
   border-bottom: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
 }
 
-tr:hover {
+tbody tr:hover {
   background: #f8fafc;
-}
-
-tr:hover td {
-  background: transparent;
 }
 
 .nome-dipendente {
   font-weight: 700;
-  color: #ef4444;
-  font-size: 1.05em;
+  color: #dc2626;
+  white-space: nowrap;
 }
 
 th.chiuso,
@@ -608,47 +450,20 @@ td.chiuso {
   display: inline-block;
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.75em;
   font-weight: 700;
   margin-left: 8px;
-  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
 }
 
-select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.9em;
-  background: white;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-select:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-  background: #fafafa;
-}
-
-select:disabled {
-  background: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
-  border-color: #e2e8f0;
-}
-
-/* Giorni Chiusura */
+/* ============================================
+   GRIGLIA GIORNI (checkbox)
+   ============================================ */
 .giorni-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
 }
 
 .checkbox-label {
@@ -659,7 +474,7 @@ select:disabled {
   padding: 14px 16px;
   border-radius: 10px;
   border: 2px solid #e2e8f0;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   background: white;
   font-weight: 600;
   color: #475569;
@@ -668,8 +483,6 @@ select:disabled {
 .checkbox-label:hover {
   border-color: #ef4444;
   background: #fef2f2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -677,85 +490,12 @@ select:disabled {
   width: 20px;
   height: 20px;
   accent-color: #ef4444;
+  flex-shrink: 0;
 }
 
-/* Ferie Section */
-.add-ferie {
-  margin-bottom: 28px;
-  padding: 24px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-}
-
-.add-ferie input[type="date"] {
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1em;
-  font-family: inherit;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.add-ferie input[type="date"]:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.ferie-list {
-  margin-top: 28px;
-}
-
-.ferie-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.ferie-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 18px;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-radius: 10px;
-  margin-bottom: 10px;
-  border-left: 4px solid #10b981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-  transition: all 0.2s ease;
-}
-
-.ferie-item:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-}
-
-.ferie-item span {
-  font-weight: 600;
-  color: #065f46;
-  font-size: 1.05em;
-}
-
-/* Ferie Detail */
-.ferie-detail {
-  background: linear-gradient(135deg, #fef2f2 0%, #fce7e7 100%);
-  border-left: 4px solid #ef4444;
-  padding: 28px;
-  border-radius: 12px;
-  margin-top: 32px;
-  border: 1px solid #fecaca;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1);
-}
-
-.ferie-detail h3 {
-  color: #991b1b;
-  margin-top: 0;
-  font-size: 1.3em;
-}
-
-/* Edit Giorni */
+/* ============================================
+   SEZIONE FERIE
+   ============================================ */
 .edit-giorni {
   display: flex;
   gap: 10px;
@@ -770,7 +510,6 @@ select:disabled {
   font-size: 0.95em;
   font-weight: 600;
   font-family: inherit;
-  transition: all 0.2s ease;
 }
 
 .edit-giorni input:focus {
@@ -781,23 +520,19 @@ select:disabled {
 
 .clickable {
   cursor: pointer;
-  color: #ef4444;
+  color: #dc2626;
   font-weight: 700;
-  transition: all 0.3s ease;
   display: inline-block;
   padding: 4px 8px;
   border-radius: 6px;
-  position: relative;
+  transition: background 0.25s ease;
 }
 
 .clickable:hover {
-  opacity: 0.85;
   background: rgba(239, 68, 68, 0.1);
-  text-decoration: underline;
 }
 
 .edit-hint {
-  display: inline-block;
   font-size: 0.7em;
   color: #94a3b8;
   margin-left: 8px;
@@ -819,137 +554,73 @@ select:disabled {
   font-weight: 700;
 }
 
-button.active {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+.ferie-detail {
+  background: linear-gradient(135deg, #fef2f2 0%, #fce7e7 100%);
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  padding: 28px;
+  border-radius: 12px;
+  margin-top: 32px;
 }
 
-button.active:hover {
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+.ferie-detail h3 {
+  color: #991b1b;
+  margin-top: 0;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .header {
-    padding: 40px 20px 30px;
-  }
-
-  .header h1 {
-    font-size: 2.2em;
-    margin-bottom: 8px;
-  }
-
-  .header p {
-    font-size: 1em;
-  }
-
-  .container {
-    margin: 25px auto;
-    padding: 0 16px;
-  }
-
-  .section {
-    padding: 24px;
-    margin-bottom: 28px;
-    border-radius: 14px;
-  }
-
-  .section h2 {
-    font-size: 1.6em;
-    margin-bottom: 20px;
-  }
-
-  .giorni-grid {
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-  }
-
-  .checkbox-label {
-    padding: 12px 14px;
-    font-size: 0.95em;
-  }
-
-  table {
-    font-size: 0.85em;
-  }
-
-  th {
-    padding: 12px 10px;
-  }
-
-  td {
-    padding: 12px 10px;
-  }
-
-  .input-group {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .input-group input {
-    padding: 12px 14px;
-  }
-
-  button {
-    padding: 12px 20px;
-    font-size: 0.95em;
-    width: 100%;
-  }
-
-  .add-ferie {
-    padding: 20px;
-  }
-
-  .ferie-detail {
-    padding: 20px;
-  }
-
-  .ferie-item {
-    padding: 14px 16px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .edit-giorni {
-    flex-wrap: wrap;
-  }
-
-  .fab-button {
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    font-size: 1.5em;
-  }
-
-  .drawer-bottom {
-    border-radius: 20px 20px 0 0;
-    padding: 16px 16px 30px;
-  }
-
-  .drawer-content h2 {
-    font-size: 1.4em;
-  }
-
-  .drawer-close-btn {
-    width: 100%;
-  }
+.add-ferie {
+  margin-bottom: 24px;
 }
 
+.add-ferie input[type="date"] {
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1em;
+  font-family: inherit;
+  font-weight: 500;
+  background: white;
+  color: #1f2937;
+}
 
-/* Drawer Overlay */
+.add-ferie input[type="date"]:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.ferie-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.ferie-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border-left: 4px solid #10b981;
+}
+
+.ferie-item span {
+  font-weight: 600;
+  color: #065f46;
+}
+
+/* ============================================
+   PANNELLI (drawer dal basso)
+   ============================================ */
 .drawer-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 100;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease;
 }
 
-/* Drawer Bottom */
 .drawer-bottom {
   position: fixed;
   bottom: 0;
@@ -957,21 +628,16 @@ button.active:hover {
   right: 0;
   background: white;
   border-radius: 24px 24px 0 0;
-  padding: 24px 24px 40px;
-  max-height: 80vh;
+  padding: 20px 24px 40px;
+  max-height: 85vh;
   overflow-y: auto;
   z-index: 101;
-  transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.15);
-}
-
-.drawer-bottom.open {
-  transform: translateY(0);
+  animation: slideUp 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 .drawer-handle {
-  width: 40px;
+  width: 44px;
   height: 4px;
   background: #e2e8f0;
   border-radius: 2px;
@@ -982,162 +648,131 @@ button.active:hover {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .drawer-content h2 {
-  font-size: 1.6em;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+  font-size: 1.5em;
   font-weight: 700;
-}
-
-.drawer-content .input-group {
-  flex-direction: column;
-  gap: 12px;
-  margin: 0;
-}
-
-.drawer-content input {
-  padding: 14px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1em;
-  font-family: inherit;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  background: #f8fafc;
   color: #1f2937;
-}
-
-.drawer-content input::placeholder {
-  color: #94a3b8;
-}
-
-.drawer-content input:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-  background: white;
-}
-
-.drawer-content button {
-  padding: 14px 20px;
-  font-size: 1em;
-  width: 100%;
+  margin: 0;
 }
 
 .drawer-close-btn {
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  margin-top: 8px;
-  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
-}
-
-.drawer-close-btn:hover {
-  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
-}
-
-.drawer-content .info {
-  color: #475569;
-  background: #f1f5f9;
-  border-left-color: #ef4444;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.25);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
   }
-  to {
-    opacity: 1;
+
+  .main-wrapper {
+    margin-left: 240px;
   }
-}
 
-/* Dropdown Giorni Chiusura */
-.giorni-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.2);
-  border: 1px solid #e2e8f0;
-  min-width: 360px;
-  max-height: 400px;
-  overflow-y: auto;
-  z-index: 102;
-  transform: translateY(-15px);
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.giorni-dropdown.open {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.dropdown-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.dropdown-item {
-  padding: 12px 14px;
-  font-size: 0.9em;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  background: white;
-  cursor: pointer;
-}
-
-.dropdown-item:hover {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-
-.dropdown-item input[type="checkbox"] {
-  cursor: pointer;
-  margin-right: 6px;
-  accent-color: #ef4444;
-}
-
-.dropdown-item input[type="checkbox"]:checked + span {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.dropdown-footer {
-  font-size: 0.85em;
-  color: #475569;
-  padding: 10px 12px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  border-left: 3px solid #ef4444;
-  font-weight: 500;
+  .section {
+    padding: 28px;
+  }
 }
 
 @media (max-width: 768px) {
-  .giorni-dropdown {
+  /* Su mobile la sidebar galleggia sopra il contenuto */
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .sidebar {
+    width: 82%;
+    max-width: 300px;
+  }
+
+  .sidebar-overlay {
+    display: block;
     position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: unset;
-    border-radius: 16px 16px 0 0;
-    max-height: 70vh;
-    transform: translateY(100%);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 55;
+    animation: fadeIn 0.25s ease;
   }
 
-  .giorni-dropdown.open {
-    transform: translateY(0);
+  .header {
+    padding: 14px 16px;
+    gap: 8px;
   }
 
-  .dropdown-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .header h1 {
+    font-size: 1.2em;
+    text-align: center;
+  }
+
+  .container {
+    margin: 24px auto;
+    padding: 0 14px;
+  }
+
+  .section {
+    padding: 22px 18px;
+    margin-bottom: 24px;
+    border-radius: 14px;
+  }
+
+  .section h2 {
+    font-size: 1.4em;
+    margin-bottom: 20px;
+  }
+
+  table {
+    font-size: 0.85em;
+  }
+
+  th,
+  td {
+    padding: 12px 10px;
+  }
+
+  .giorni-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .checkbox-label {
+    padding: 12px;
+    font-size: 0.9em;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  .input-group button {
+    width: 100%;
+  }
+
+  .ferie-detail {
+    padding: 20px;
+  }
+
+  .drawer-bottom {
+    padding: 16px 16px 30px;
+  }
+
+  .drawer-content h2 {
+    font-size: 1.3em;
   }
 }

@@ -48,7 +48,13 @@ export default function FerieSection({ dipendenti, ferie, setFerie, setDipendent
     setEditingGiorni(null);
   };
 
-  const getCurrentYear = () => new Date().getFullYear();
+  // Rimuove il dipendente e chiude il pannello se era quello aperto
+  const handleElimina = (id) => {
+    if (selectedDipendente === id) setSelectedDipendente(null);
+    eliminaDipendente(id);
+  };
+
+  const dipSelezionato = dipendenti.find(d => d.id === selectedDipendente);
 
   return (
     <section className="section ferie-section">
@@ -106,7 +112,7 @@ export default function FerieSection({ dipendenti, ferie, setFerie, setDipendent
                           Gestisci
                         </button>
                         <button
-                          onClick={() => eliminaDipendente(dip.id)}
+                          onClick={() => handleElimina(dip.id)}
                           className="btn-delete"
                         >
                           Elimina
@@ -120,9 +126,9 @@ export default function FerieSection({ dipendenti, ferie, setFerie, setDipendent
           </div>
 
           {/* Dettagli Ferie */}
-          {selectedDipendente && (
+          {dipSelezionato && (
             <div className="ferie-detail">
-              <h3>Ferie di {dipendenti.find(d => d.id === selectedDipendente)?.nome}</h3>
+              <h3>Ferie di {dipSelezionato.nome}</h3>
 
               {/* Aggiungi Giorno */}
               <div className="add-ferie">
@@ -139,11 +145,11 @@ export default function FerieSection({ dipendenti, ferie, setFerie, setDipendent
               {/* Lista Giorni Ferie */}
               <div className="ferie-list">
                 <h4>Giorni di Ferie</h4>
-                {ferie[selectedDipendente]?.length === 0 ? (
+                {(ferie[selectedDipendente] || []).length === 0 ? (
                   <p className="empty">Nessun giorno di ferie inserito</p>
                 ) : (
                   <ul>
-                    {ferie[selectedDipendente]?.map((data, idx) => (
+                    {(ferie[selectedDipendente] || []).map((data, idx) => (
                       <li key={idx} className="ferie-item">
                         <span>{new Date(data).toLocaleDateString('it-IT')}</span>
                         <button
