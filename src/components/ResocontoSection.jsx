@@ -53,9 +53,12 @@ export default function ResocontoSection({ dipendenti, turni, ferie, giorniChius
     [righe]
   );
 
+  // aggiornamento funzionale: piu clic ravvicinati avanzano di un mese ciascuno
   const cambiaMese = (delta) => {
-    const d = new Date(vista.anno, vista.mese + delta, 1);
-    setVista({ anno: d.getFullYear(), mese: d.getMonth() });
+    setVista(v => {
+      const d = new Date(v.anno, v.mese + delta, 1);
+      return { anno: d.getFullYear(), mese: d.getMonth() };
+    });
   };
 
   const vaiAOggi = () => setVista({ anno: oggi.getFullYear(), mese: oggi.getMonth() });

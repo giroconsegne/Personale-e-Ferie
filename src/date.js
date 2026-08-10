@@ -29,6 +29,12 @@ const MAX_GIORNI = 366;
 export const contaFerie = (date, giorniChiusura) =>
   date.filter(d => !eChiuso(d, giorniChiusura)).length;
 
+// Il monte ferie è annuale: i giorni vanno sempre filtrati per anno
+export const ferieDellAnno = (date, anno) =>
+  date.filter(d => d.startsWith(`${anno}-`));
+
+export const annoCorrente = () => new Date().getFullYear();
+
 /**
  * Espande un periodo in singole date, saltando i giorni di chiusura
  * (in pizzeria chiusa non si consuma un giorno di ferie).

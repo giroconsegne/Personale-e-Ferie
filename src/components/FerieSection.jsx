@@ -2,10 +2,18 @@ import React, { useState } from 'react';
 import Avatar from './Avatar';
 import ScrollArea from './ScrollArea';
 import { repartoDi, slugReparto } from '../costanti';
-import { giorniDelPeriodo, raggruppaInPeriodi, etichettaPeriodo, contaFerie } from '../date';
+import {
+  giorniDelPeriodo,
+  raggruppaInPeriodi,
+  etichettaPeriodo,
+  contaFerie,
+  ferieDellAnno,
+  annoCorrente
+} from '../date';
 
 export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
+  const [anno, setAnno] = useState(annoCorrente);
   const [dal, setDal] = useState('');
   const [al, setAl] = useState('');
 
@@ -50,7 +58,15 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
   };
 
   const dipSelezionato = dipendenti.find(d => d.id === selectedDipendente);
-  const giorniSelezionato = ferie[selectedDipendente] || [];
+
+  // Il monte ferie si azzera ogni anno: si guarda un anno alla volta
+  const giorniSelezionato = ferieDellAnno(ferie[selectedDipendente] || [], anno);
+
+  const cambiaAnno = (delta) => {
+    setAnno(a => a + delta);
+    setDal('');
+    setAl('');
+  };
 
   return (
     <section className="card">
@@ -58,6 +74,16 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
         <div>
           <h2>Ferie</h2>
           <p className="card-sub">Tocca una persona per inserire o togliere i suoi giorni</p>
+        </div>
+        <div className="navigazione-mese">
+          <button className="icon-btn" onClick={() => cambiaAnno(-1)} title="Anno precedente">‹</button>
+          <span className="mese-corrente">Anno {anno}</span>
+          <button className="icon-btn" onClick={() => cambiaAnno(1)} title="Anno successivo">›</button>
+          {anno !== annoCorrente() && (
+            <button className="btn btn-secondario btn-oggi" onClick={() => cambiaAnno(annoCorrente() - anno)}>
+              Oggi
+            </button>
+          )}
         </div>
       </div>
 
@@ -83,7 +109,7 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
               </thead>
               <tbody>
                 {dipendenti.map(dip => {
-                  const usate = contaFerie(ferie[dip.id] || [], giorniChiusura);
+                  const usate = contaFerie(ferieDellAnno(ferie[dip.id] || [], anno), giorniChiusura);
                   const rimaste = Math.max(0, dip.giorni_ferie - usate);
                   const perc = Math.min(100, Math.round((usate / dip.giorni_ferie) * 100));
                   const livello = perc >= 100 ? 'pieno' : perc >= 75 ? 'alto' : 'ok';
@@ -155,6 +181,8 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                   <input
                     type="date"
                     value={dal}
+                    min={`${anno}-01-01`}
+                    max={`${anno}-12-31`}
                     onChange={(e) => setDal(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
                   />
@@ -164,7 +192,8 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                   <input
                     type="date"
                     value={al}
-                    min={dal || undefined}
+                    min={dal || `${anno}-01-01`}
+                    max={`${anno}-12-31`}
                     onChange={(e) => setAl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
                   />
