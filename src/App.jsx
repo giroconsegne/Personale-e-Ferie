@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
+import CalendarioSection from './components/CalendarioSection';
 import {
   GIORNI,
   GIORNI_LABEL,
@@ -164,6 +165,13 @@ function App() {
             <span className="nav-icon">🏖️</span>
             <span className="nav-text">Ferie</span>
           </button>
+          <button
+            className={`nav-item ${activeSection === 'calendario' ? 'active' : ''}`}
+            onClick={() => vaiA('calendario')}
+          >
+            <span className="nav-icon">🗓️</span>
+            <span className="nav-text">Calendario</span>
+          </button>
 
           <p className="nav-label">Impostazioni</p>
           <button className="nav-item" onClick={() => apriPannello(setShowGiorniDrawer)}>
@@ -198,7 +206,12 @@ function App() {
       {/* ---------- Contenuto ---------- */}
       <div className="main-wrapper">
         <header className="topbar">
-          <button className="icon-btn menu-toggle" onClick={() => setSidebarOpen(true)} title="Apri menu">
+          <button
+            className="icon-btn menu-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            title={sidebarOpen ? 'Nascondi menu' : 'Mostra menu'}
+            aria-expanded={sidebarOpen}
+          >
             ☰
           </button>
           <h1 className="topbar-titolo">Gestione Pizzeria</h1>
@@ -236,6 +249,15 @@ function App() {
               setDipendenti={setDipendenti}
               eliminaDipendente={eliminaDipendente}
               cambiaReparto={cambiaReparto}
+              giorniChiusura={giorniChiusura}
+            />
+          )}
+
+          {activeSection === 'calendario' && (
+            <CalendarioSection
+              dipendenti={dipendenti}
+              ferie={ferie}
+              giorniChiusura={giorniChiusura}
             />
           )}
         </main>

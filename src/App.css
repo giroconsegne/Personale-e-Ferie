@@ -484,6 +484,12 @@ h1, h2, h3 {
   box-shadow: inset 0 0 0 1px hsl(var(--tinta) 40% 85%);
 }
 
+.avatar-sm {
+  width: 20px;
+  height: 20px;
+  font-size: 8.5px;
+}
+
 .avatar-md {
   width: 32px;
   height: 32px;
@@ -499,8 +505,115 @@ h1, h2, h3 {
 /* ============================================================
    TABELLE
    ============================================================ */
-.tabella-scroll {
+/* ============================================================
+   AREE CHE SCORRONO
+   ============================================================ */
+.scroll-area {
+  position: relative;
+}
+
+.scroll-area-inner {
   overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+/* sfumatura che segnala altro contenuto verso destra */
+.scroll-area::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 12px;
+  width: 46px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), var(--surface) 78%);
+}
+
+.scroll-area.altro-a-destra::after {
+  opacity: 1;
+}
+
+/* barra di scorrimento sottile e discreta */
+.scroll-area-inner {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-forte) transparent;
+}
+
+.scroll-area-inner::-webkit-scrollbar {
+  height: 12px;
+}
+
+.scroll-area-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area-inner::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: var(--border-forte);
+  background-clip: content-box;
+  border: 4px solid transparent;
+  transition: background-color 0.2s ease;
+}
+
+.scroll-area-inner::-webkit-scrollbar-thumb:hover {
+  background-color: var(--testo-3);
+}
+
+.scroll-area-inner::-webkit-scrollbar-thumb:active {
+  background-color: var(--testo-2);
+}
+
+/* stessa barra per gli altri contenitori scorrevoli */
+.sidebar,
+.drawer,
+.select-popup {
+  scrollbar-width: thin;
+}
+
+.sidebar {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.drawer,
+.select-popup {
+  scrollbar-color: var(--border-forte) transparent;
+}
+
+.sidebar::-webkit-scrollbar,
+.drawer::-webkit-scrollbar,
+.select-popup::-webkit-scrollbar {
+  width: 11px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.drawer::-webkit-scrollbar-track,
+.select-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.drawer::-webkit-scrollbar-thumb,
+.select-popup::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-clip: content-box;
+  border: 3.5px solid transparent;
+  background-color: var(--border-forte);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.drawer::-webkit-scrollbar-thumb:hover,
+.select-popup::-webkit-scrollbar-thumb:hover {
+  background-color: var(--testo-3);
 }
 
 .tabella {
@@ -633,39 +746,6 @@ h1, h2, h3 {
   border-color: var(--rep-sala-bordo);
 }
 
-/* selettore del reparto nella tabella ferie */
-.sel-reparto {
-  padding: 6px 26px 6px 11px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-opacity='.45' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-
-.sel-reparto.rep-pizzeria {
-  background-color: var(--rep-pizzeria-bg);
-  color: var(--rep-pizzeria);
-  border-color: var(--rep-pizzeria-bordo);
-}
-
-.sel-reparto.rep-cucina {
-  background-color: var(--rep-cucina-bg);
-  color: var(--rep-cucina);
-  border-color: var(--rep-cucina-bordo);
-}
-
-.sel-reparto.rep-sala {
-  background-color: var(--rep-sala-bg);
-  color: var(--rep-sala);
-  border-color: var(--rep-sala-bordo);
-}
-
 /* giorno chiuso */
 .tabella th.chiuso {
   color: var(--avviso);
@@ -703,45 +783,169 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
-/* select del turno, colorato in base al valore */
-.turno-select {
+/* ============================================================
+   MENU A TENDINA
+   ============================================================ */
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
-  min-width: 104px;
-  padding: 7px 26px 7px 11px;
+  min-width: 108px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-forte);
   border-radius: 999px;
-  border: 1px solid transparent;
+  background: var(--surface);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
+  color: var(--testo);
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-opacity='.45' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  transition: filter 0.15s ease, box-shadow 0.15s ease;
+  transition: filter 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.turno-select:hover {
+.select-valore {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-freccia {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: transform 0.2s ease;
+}
+
+.select-trigger:hover {
   filter: brightness(0.97);
 }
 
-.turno-mattina {
-  background-color: var(--mattina-bg);
+.select-trigger.aperto {
+  box-shadow: 0 0 0 3px rgba(29, 26, 22, 0.07);
+}
+
+.select-trigger.aperto .select-freccia {
+  transform: rotate(180deg);
+}
+
+/* pillole colorate: turni e reparti */
+.pillola {
+  border-color: transparent;
+}
+
+.pillola.turno-mattina {
+  background: var(--mattina-bg);
   color: var(--mattina);
   border-color: #f2dfbe;
 }
 
-.turno-sera {
-  background-color: var(--sera-bg);
+.pillola.turno-sera {
+  background: var(--sera-bg);
   color: var(--sera);
   border-color: #dbd9f6;
 }
 
-.turno-riposo {
-  background-color: var(--riposo-bg);
+.pillola.turno-riposo {
+  background: var(--riposo-bg);
   color: var(--riposo);
   border-color: #e2ddd8;
 }
+
+.pillola.rep-pizzeria {
+  background: var(--rep-pizzeria-bg);
+  color: var(--rep-pizzeria);
+  border-color: var(--rep-pizzeria-bordo);
+}
+
+.pillola.rep-cucina {
+  background: var(--rep-cucina-bg);
+  color: var(--rep-cucina);
+  border-color: var(--rep-cucina-bordo);
+}
+
+.pillola.rep-sala {
+  background: var(--rep-sala-bg);
+  color: var(--rep-sala);
+  border-color: var(--rep-sala-bordo);
+}
+
+/* lista delle opzioni (montata sul body) */
+.select-popup {
+  position: fixed;
+  z-index: 200;
+  min-width: 150px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--ombra-lg);
+  outline: none;
+  animation: apriLista 0.16s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transform-origin: top center;
+}
+
+@keyframes apriLista {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.select-opzione {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--testo-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-opzione.evidenziata {
+  background: var(--surface-3);
+  color: var(--testo);
+}
+
+.select-opzione.scelta {
+  color: var(--testo);
+}
+
+.select-opzione-testo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-spunta {
+  flex-shrink: 0;
+  color: var(--brand);
+}
+
+.punto-opzione {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.punto-opzione.turno-mattina { background: var(--mattina); }
+.punto-opzione.turno-sera { background: var(--sera); }
+.punto-opzione.turno-riposo { background: var(--riposo); }
+.punto-opzione.rep-pizzeria { background: var(--rep-pizzeria); }
+.punto-opzione.rep-cucina { background: var(--rep-cucina); }
+.punto-opzione.rep-sala { background: var(--rep-sala); }
 
 /* barra ferie */
 .meter {
@@ -946,8 +1150,10 @@ h1, h2, h3 {
   color: var(--testo);
 }
 
+/* il pulsante del menu resta disponibile a ogni larghezza,
+   altrimenti con la barra chiusa non ci sarebbe modo di riaprirla */
 .menu-toggle {
-  display: none;
+  display: grid;
 }
 
 /* ============================================================
@@ -1006,16 +1212,35 @@ h1, h2, h3 {
   color: var(--testo-2);
 }
 
-.dettaglio-form {
+/* inserimento di un periodo di ferie */
+.periodo-form {
   display: flex;
-  gap: 9px;
-  margin-bottom: 18px;
+  align-items: flex-end;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.dettaglio-form input[type="date"] {
+.campo-data {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  min-width: 170px;
+  min-width: 160px;
+}
+
+.campo-data .campo-label {
+  margin-bottom: 5px;
+}
+
+.campo-label em {
+  font-style: normal;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.75;
+}
+
+.campo-data input[type="date"] {
+  width: 100%;
   padding: 9px 13px;
   border: 1px solid var(--border-forte);
   border-radius: var(--r-sm);
@@ -1025,10 +1250,25 @@ h1, h2, h3 {
   color: var(--testo);
 }
 
-.dettaglio-form input[type="date"]:focus {
+.campo-data input[type="date"]:focus {
   outline: none;
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand-chiaro);
+}
+
+.periodo-form .btn {
+  padding: 10px 18px;
+}
+
+.nota {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--testo-2);
+}
+
+.nota-errore {
+  color: var(--pericolo);
 }
 
 .dettaglio-vuoto {
@@ -1042,6 +1282,19 @@ h1, h2, h3 {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  margin-top: 16px;
+}
+
+.ferie-quanti {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--ok-chiaro);
+  color: var(--ok);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .ferie-item {
@@ -1079,6 +1332,207 @@ h1, h2, h3 {
 .btn-elimina-giorno:hover {
   background: var(--brand-chiaro);
   color: var(--brand);
+}
+
+/* ============================================================
+   CALENDARIO
+   ============================================================ */
+.navigazione-mese {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mese-corrente {
+  min-width: 132px;
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.btn-oggi {
+  margin-left: 6px;
+  padding: 7px 13px;
+  font-size: 12.5px;
+}
+
+.calendario {
+  padding: 18px 24px 4px;
+}
+
+.calendario-intestazione,
+.calendario-griglia {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendario-intestazione {
+  margin-bottom: 6px;
+}
+
+.sigla {
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--testo-3);
+}
+
+.sigla.chiuso {
+  color: var(--avviso);
+}
+
+.giorno {
+  min-height: 92px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.giorno.fuori {
+  border-color: transparent;
+  background: transparent;
+  min-height: 0;
+}
+
+.giorno.chiuso {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--surface-2),
+    var(--surface-2) 6px,
+    var(--surface-3) 6px,
+    var(--surface-3) 12px
+  );
+}
+
+.giorno.con-ferie {
+  border-color: #cbe6d8;
+  background: linear-gradient(180deg, #f4fbf7, var(--surface) 55%);
+}
+
+.giorno.oggi {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-chiaro);
+}
+
+.giorno-testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.giorno-numero {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--testo-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.giorno.oggi .giorno-numero {
+  color: var(--brand);
+}
+
+.giorno-chiuso {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--avviso);
+}
+
+.giorno-persone {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.persona-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px 2px 2px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  min-width: 0;
+}
+
+.persona-chip.rep-pizzeria {
+  background: var(--rep-pizzeria-bg);
+  color: var(--rep-pizzeria);
+  border-color: var(--rep-pizzeria-bordo);
+}
+
+.persona-chip.rep-cucina {
+  background: var(--rep-cucina-bg);
+  color: var(--rep-cucina);
+  border-color: var(--rep-cucina-bordo);
+}
+
+.persona-chip.rep-sala {
+  background: var(--rep-sala-bg);
+  color: var(--rep-sala);
+  border-color: var(--rep-sala-bordo);
+}
+
+.persona-chip.altri {
+  justify-content: center;
+  padding: 3px 8px;
+  background: var(--surface-3);
+  color: var(--testo-2);
+}
+
+.chip-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.riepilogo-mese {
+  padding: 20px 24px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.riepilogo-mese h3 {
+  font-size: 15px;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+
+.elenco-riepilogo {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.elenco-riepilogo li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.riepilogo-persona {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============================================================
@@ -1330,8 +1784,7 @@ h1, h2, h3 {
     animation: dissolvi 0.22s ease;
   }
 
-  .chiudi-menu,
-  .menu-toggle {
+  .chiudi-menu {
     display: grid;
   }
 
@@ -1396,7 +1849,19 @@ h1, h2, h3 {
 
   .meter { max-width: 92px; }
 
-  .turno-select { min-width: 96px; }
+  .select-trigger {
+    min-width: 96px;
+    font-size: 12.5px;
+    padding: 7px 9px;
+  }
+
+  /* tocco più comodo sulle opzioni */
+  .select-opzione {
+    padding: 12px 11px;
+    font-size: 14px;
+  }
+
+  .scroll-area::after { width: 32px; }
 
   .azioni {
     flex-direction: column;
@@ -1405,9 +1870,52 @@ h1, h2, h3 {
 
   .dettaglio { padding: 18px 16px 22px; }
 
-  .dettaglio-form { flex-direction: column; }
+  .periodo-form { flex-direction: column; align-items: stretch; }
 
-  .dettaglio-form .btn { width: 100%; }
+  .periodo-form .btn { width: 100%; }
+
+  /* calendario compatto: solo pallini al posto dei nomi */
+  .calendario { padding: 14px 10px 4px; }
+
+  .calendario-intestazione,
+  .calendario-griglia { gap: 3px; }
+
+  .giorno {
+    min-height: 58px;
+    padding: 4px;
+    border-radius: var(--r-sm);
+  }
+
+  .giorno-numero { font-size: 11.5px; }
+
+  .giorno-chiuso { display: none; }
+
+  .giorno-persone {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .persona-chip {
+    padding: 0;
+    border: none;
+    background: transparent !important;
+  }
+
+  .chip-nome { display: none; }
+
+  .persona-chip.altri {
+    padding: 1px 5px;
+    font-size: 9.5px;
+    background: var(--surface-3) !important;
+    border-radius: 999px;
+  }
+
+  .navigazione-mese { width: 100%; }
+
+  .mese-corrente { flex: 1; min-width: 0; }
+
+  .riepilogo-mese { padding: 16px 14px 20px; }
 
   .giorni-grid { grid-template-columns: repeat(2, 1fr); }
 

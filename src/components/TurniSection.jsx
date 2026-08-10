@@ -1,5 +1,7 @@
 import React from 'react';
 import Avatar from './Avatar';
+import Select from './Select';
+import ScrollArea from './ScrollArea';
 import { REPARTI, repartoDi, slugReparto } from '../costanti';
 
 const TURNI = [
@@ -7,6 +9,12 @@ const TURNI = [
   { valore: 'Sera', classe: 'turno-sera' },
   { valore: 'Riposo', classe: 'turno-riposo' }
 ];
+
+const OPZIONI_TURNO = TURNI.map(t => ({
+  valore: t.valore,
+  etichetta: t.valore,
+  classe: t.classe
+}));
 
 const classeTurno = (valore) =>
   TURNI.find(t => t.valore === valore)?.classe || 'turno-riposo';
@@ -54,7 +62,7 @@ export default function TurniSection({ dipendenti, turni, setTurni, giorni, gior
           <p className="vuoto-testo">Aggiungine uno dal menu per costruire la settimana.</p>
         </div>
       ) : (
-        <div className="tabella-scroll">
+        <ScrollArea>
           <table className="tabella tabella-turni">
             <thead>
               <tr>
@@ -98,16 +106,13 @@ export default function TurniSection({ dipendenti, turni, setTurni, giorni, gior
                           {chiuso ? (
                             <span className="turno-chiuso">—</span>
                           ) : (
-                            <select
-                              className={`turno-select ${classeTurno(valore)}`}
-                              value={valore}
-                              onChange={(e) => handleTurnoChange(dip.id, giorno, e.target.value)}
-                              aria-label={`Turno di ${dip.nome}`}
-                            >
-                              {TURNI.map(t => (
-                                <option key={t.valore} value={t.valore}>{t.valore}</option>
-                              ))}
-                            </select>
+                            <Select
+                              valore={valore}
+                              opzioni={OPZIONI_TURNO}
+                              onChange={(v) => handleTurnoChange(dip.id, giorno, v)}
+                              classe={`pillola ${classeTurno(valore)}`}
+                              etichettaAria={`Turno di ${dip.nome}`}
+                            />
                           )}
                         </td>
                       );
@@ -117,7 +122,7 @@ export default function TurniSection({ dipendenti, turni, setTurni, giorni, gior
               </tbody>
             ))}
           </table>
-        </div>
+        </ScrollArea>
       )}
     </section>
   );

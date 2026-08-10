@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import Avatar from './Avatar';
+import Select from './Select';
+import ScrollArea from './ScrollArea';
 import { REPARTI, repartoDi, slugReparto } from '../costanti';
+import { giorniDelPeriodo, raggruppaInPeriodi, etichettaPeriodo } from '../date';
 
-const formattaData = (iso) =>
-  new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+const OPZIONI_REPARTO = REPARTI.map(r => ({
+  valore: r,
+  etichetta: r,
+  classe: `rep-${slugReparto(r)}`
+}));
 
 export default function FerieSection({
   dipendenti,
@@ -11,31 +17,46 @@ export default function FerieSection({
   setFerie,
   setDipendenti,
   eliminaDipendente,
-  cambiaReparto
+  cambiaReparto,
+  giorniChiusura
 }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [dal, setDal] = useState('');
+  const [al, setAl] = useState('');
   const [editingGiorni, setEditingGiorni] = useState(null);
   const [editingGiorniValue, setEditingGiorniValue] = useState('');
 
-  // Aggiunge un giorno di ferie
-  const aggiungiGiornoFerie = () => {
-    if (!selectedDipendente || !selectedDate) return;
+  // Il periodo va da "dal" a "al"; se "al" è vuoto vale il solo giorno iniziale
+  const fine = al || dal;
+  const periodoValido = Boolean(dal) && fine >= dal;
 
-    const giorni = [...(ferie[selectedDipendente] || [])];
-    if (!giorni.includes(selectedDate)) {
-      giorni.push(selectedDate);
-      giorni.sort();
-      setFerie({ ...ferie, [selectedDipendente]: giorni });
-      setSelectedDate('');
-    }
+  const anteprima = periodoValido
+    ? giorniDelPeriodo(dal, fine, giorniChiusura)
+    : { giorni: [], esclusi: 0 };
+
+  const giaPresenti = anteprima.giorni.filter(g =>
+    (ferie[selectedDipendente] || []).includes(g)
+  ).length;
+
+  const daAggiungere = anteprima.giorni.length - giaPresenti;
+
+  // Aggiunge tutti i giorni del periodo
+  const aggiungiPeriodo = () => {
+    if (!selectedDipendente || !periodoValido) return;
+
+    const esistenti = ferie[selectedDipendente] || [];
+    const uniti = [...new Set([...esistenti, ...anteprima.giorni])].sort();
+
+    setFerie({ ...ferie, [selectedDipendente]: uniti });
+    setDal('');
+    setAl('');
   };
 
-  // Rimuove un giorno di ferie
-  const rimuoviGiornoFerie = (dipendenteId, data) => {
+  // Rimuove un intero periodo
+  const rimuoviPeriodo = (dipendenteId, date) => {
     setFerie({
       ...ferie,
-      [dipendenteId]: ferie[dipendenteId].filter(d => d !== data)
+      [dipendenteId]: ferie[dipendenteId].filter(d => !date.includes(d))
     });
   };
 
@@ -81,7 +102,7 @@ export default function FerieSection({
         </div>
       ) : (
         <>
-          <div className="tabella-scroll">
+          <ScrollArea>
             <table className="tabella tabella-ferie">
               <thead>
                 <tr>
@@ -117,16 +138,13 @@ export default function FerieSection({
                       </td>
 
                       <td>
-                        <select
-                          className={`sel-reparto rep-${slugReparto(reparto)}`}
-                          value={reparto}
-                          onChange={(e) => cambiaReparto(dip.id, e.target.value)}
-                          aria-label={`Reparto di ${dip.nome}`}
-                        >
-                          {REPARTI.map(r => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
+                        <Select
+                          valore={reparto}
+                          opzioni={OPZIONI_REPARTO}
+                          onChange={(v) => cambiaReparto(dip.id, v)}
+                          classe={`pillola rep-${slugReparto(reparto)}`}
+                          etichettaAria={`Reparto di ${dip.nome}`}
+                        />
                       </td>
 
                       <td>
@@ -177,7 +195,7 @@ export default function FerieSection({
                 })}
               </tbody>
             </table>
-          </div>
+          </ScrollArea>
 
           {dipSelezionato && (
             <div className="dettaglio">
@@ -191,29 +209,64 @@ export default function FerieSection({
                 </div>
               </div>
 
-              <div className="dettaglio-form">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && aggiungiGiornoFerie()}
-                />
-                <button className="btn btn-primario" onClick={aggiungiGiornoFerie} disabled={!selectedDate}>
-                  Aggiungi giorno
+              <div className="periodo-form">
+                <label className="campo-data">
+                  <span className="campo-label">Dal</span>
+                  <input
+                    type="date"
+                    value={dal}
+                    onChange={(e) => setDal(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
+                  />
+                </label>
+                <label className="campo-data">
+                  <span className="campo-label">Al <em>(facoltativo)</em></span>
+                  <input
+                    type="date"
+                    value={al}
+                    min={dal || undefined}
+                    onChange={(e) => setAl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && aggiungiPeriodo()}
+                  />
+                </label>
+                <button
+                  className="btn btn-primario"
+                  onClick={aggiungiPeriodo}
+                  disabled={!periodoValido || daAggiungere === 0}
+                >
+                  Aggiungi
                 </button>
               </div>
+
+              {dal && !periodoValido && (
+                <p className="nota nota-errore">La data finale precede quella iniziale.</p>
+              )}
+
+              {periodoValido && (
+                <p className="nota">
+                  {daAggiungere > 0
+                    ? `Verranno aggiunti ${daAggiungere} ${daAggiungere === 1 ? 'giorno' : 'giorni'}`
+                    : 'Questo periodo è già stato inserito'}
+                  {anteprima.esclusi > 0 &&
+                    ` · ${anteprima.esclusi} ${anteprima.esclusi === 1 ? 'giorno escluso' : 'giorni esclusi'} per chiusura`}
+                  {giaPresenti > 0 && daAggiungere > 0 && ` · ${giaPresenti} già presenti`}
+                </p>
+              )}
 
               {giorniSelezionato.length === 0 ? (
                 <p className="dettaglio-vuoto">Nessun giorno di ferie inserito.</p>
               ) : (
                 <ul className="lista-ferie">
-                  {giorniSelezionato.map(data => (
-                    <li key={data} className="ferie-item">
-                      <span className="ferie-data">{formattaData(data)}</span>
+                  {raggruppaInPeriodi(giorniSelezionato, giorniChiusura).map(periodo => (
+                    <li key={periodo.inizio} className="ferie-item">
+                      <span className="ferie-data">{etichettaPeriodo(periodo)}</span>
+                      <span className="ferie-quanti">
+                        {periodo.date.length} {periodo.date.length === 1 ? 'giorno' : 'giorni'}
+                      </span>
                       <button
                         className="btn-elimina-giorno"
-                        onClick={() => rimuoviGiornoFerie(selectedDipendente, data)}
-                        title="Rimuovi giorno"
+                        onClick={() => rimuoviPeriodo(selectedDipendente, periodo.date)}
+                        title="Rimuovi periodo"
                       >
                         ✕
                       </button>
