@@ -3,6 +3,7 @@ import Avatar from './Avatar';
 import Select from './Select';
 import ScrollArea from './ScrollArea';
 import { GIORNI, GIORNI_LABEL, REPARTI, repartoDi, slugReparto } from '../costanti';
+import { contaFerie } from '../date';
 
 const OPZIONI_REPARTO = REPARTI.map(r => ({
   valore: r,
@@ -79,7 +80,7 @@ export default function ImpostazioniSection({
               </thead>
               <tbody>
                 {dipendenti.map(dip => {
-                  const usate = (ferie[dip.id] || []).length;
+                  const usate = contaFerie(ferie[dip.id] || [], giorniChiusura);
                   const reparto = repartoDi(dip);
 
                   return (

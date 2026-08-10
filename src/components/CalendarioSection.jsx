@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
 import { GIORNI, repartoDi, slugReparto } from '../costanti';
-import { aData, aIso } from '../date';
+import { aData, aIso, contaFerie } from '../date';
 
 const MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -59,11 +59,14 @@ export default function CalendarioSection({ dipendenti, ferie, giorniChiusura })
     return dipendenti
       .map(dip => ({
         dip,
-        quanti: (ferie[dip.id] || []).filter(d => d.startsWith(prefisso)).length
+        quanti: contaFerie(
+          (ferie[dip.id] || []).filter(d => d.startsWith(prefisso)),
+          giorniChiusura
+        )
       }))
       .filter(r => r.quanti > 0)
       .sort((a, b) => b.quanti - a.quanti);
-  }, [dipendenti, ferie, vista]);
+  }, [dipendenti, ferie, vista, giorniChiusura]);
 
   return (
     <section className="card">

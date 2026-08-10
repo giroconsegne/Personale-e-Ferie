@@ -3,6 +3,7 @@ import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
 import CalendarioSection from './components/CalendarioSection';
+import ResocontoSection from './components/ResocontoSection';
 import ImpostazioniSection from './components/ImpostazioniSection';
 import {
   GIORNI,
@@ -169,6 +170,14 @@ function App() {
             <span className="nav-text">Calendario</span>
           </button>
 
+          <button
+            className={`nav-item ${activeSection === 'resoconto' ? 'active' : ''}`}
+            onClick={() => vaiA('resoconto')}
+          >
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Resoconto</span>
+          </button>
+
           <div className="nav-divisore" />
 
           <button
@@ -248,6 +257,15 @@ function App() {
           {activeSection === 'calendario' && (
             <CalendarioSection
               dipendenti={dipendenti}
+              ferie={ferie}
+              giorniChiusura={giorniChiusura}
+            />
+          )}
+
+          {activeSection === 'resoconto' && (
+            <ResocontoSection
+              dipendenti={dipendenti}
+              turni={turni}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
             />

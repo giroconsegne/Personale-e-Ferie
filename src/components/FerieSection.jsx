@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Avatar from './Avatar';
 import ScrollArea from './ScrollArea';
 import { repartoDi, slugReparto } from '../costanti';
-import { giorniDelPeriodo, raggruppaInPeriodi, etichettaPeriodo } from '../date';
+import { giorniDelPeriodo, raggruppaInPeriodi, etichettaPeriodo, contaFerie } from '../date';
 
 export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
@@ -83,7 +83,7 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
               </thead>
               <tbody>
                 {dipendenti.map(dip => {
-                  const usate = (ferie[dip.id] || []).length;
+                  const usate = contaFerie(ferie[dip.id] || [], giorniChiusura);
                   const rimaste = Math.max(0, dip.giorni_ferie - usate);
                   const perc = Math.min(100, Math.round((usate / dip.giorni_ferie) * 100));
                   const livello = perc >= 100 ? 'pieno' : perc >= 75 ? 'alto' : 'ok';
@@ -144,7 +144,7 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                 <div>
                   <h3>{dipSelezionato.nome}</h3>
                   <p className="dettaglio-sub">
-                    {repartoDi(dipSelezionato)} · {giorniSelezionato.length} di {dipSelezionato.giorni_ferie} giorni utilizzati
+                    {repartoDi(dipSelezionato)} · {contaFerie(giorniSelezionato, giorniChiusura)} di {dipSelezionato.giorni_ferie} giorni utilizzati
                   </p>
                 </div>
               </div>

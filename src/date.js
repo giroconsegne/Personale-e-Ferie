@@ -22,6 +22,14 @@ export const eChiuso = (iso, giorniChiusura) => giorniChiusura.includes(chiaveGi
 const MAX_GIORNI = 366;
 
 /**
+ * Giorni di ferie che consumano davvero il monte ferie: quelli caduti
+ * in un giorno di chiusura non contano. Serve perché una chiusura può
+ * essere impostata dopo che le ferie erano già state inserite.
+ */
+export const contaFerie = (date, giorniChiusura) =>
+  date.filter(d => !eChiuso(d, giorniChiusura)).length;
+
+/**
  * Espande un periodo in singole date, saltando i giorni di chiusura
  * (in pizzeria chiusa non si consuma un giorno di ferie).
  */
@@ -37,6 +45,43 @@ export function giorniDelPeriodo(dal, al, giorniChiusura) {
   }
 
   return { giorni, esclusi };
+}
+
+/**
+ * Conta i giorni di un intervallo per un singolo dipendente.
+ * Un giorno è lavorato se la pizzeria è aperta, la persona non è in ferie
+ * e il turno di quel giorno della settimana non è "Riposo".
+ * "lavorati" considera solo i giorni già trascorsi, "previsti" tutto il periodo.
+ */
+export function conteggiaGiorni({ dal, al, turniDip, ferieDip, giorniChiusura, oggi }) {
+  const conta = { lavorati: 0, previsti: 0, mattine: 0, sere: 0, ferie: 0, riposi: 0, chiusure: 0 };
+  let corrente = dal;
+
+  for (let i = 0; i <= 400 && corrente <= al; i++) {
+    const chiave = chiaveGiorno(corrente);
+
+    if (giorniChiusura.includes(chiave)) {
+      conta.chiusure++;
+    } else if (ferieDip.includes(corrente)) {
+      conta.ferie++;
+    } else {
+      const turno = turniDip?.[chiave] || 'Riposo';
+      if (turno === 'Riposo') {
+        conta.riposi++;
+      } else {
+        conta.previsti++;
+        if (corrente <= oggi) {
+          conta.lavorati++;
+          if (turno === 'Mattina') conta.mattine++;
+          else conta.sere++;
+        }
+      }
+    }
+
+    corrente = giornoSuccessivo(corrente);
+  }
+
+  return conta;
 }
 
 // Due date fanno parte dello stesso periodo se in mezzo c'è solo chiusura
