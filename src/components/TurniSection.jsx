@@ -1,56 +1,121 @@
 import React from 'react';
+import Avatar from './Avatar';
+import { REPARTI, repartoDi, slugReparto } from '../costanti';
+
+const TURNI = [
+  { valore: 'Mattina', classe: 'turno-mattina' },
+  { valore: 'Sera', classe: 'turno-sera' },
+  { valore: 'Riposo', classe: 'turno-riposo' }
+];
+
+const classeTurno = (valore) =>
+  TURNI.find(t => t.valore === valore)?.classe || 'turno-riposo';
 
 export default function TurniSection({ dipendenti, turni, setTurni, giorni, giorniLabel, giorniChiusura }) {
-  const handleTurnoChange = (dipendentiId, giorno, valore) => {
+  const handleTurnoChange = (dipendenteId, giorno, valore) => {
     setTurni({
       ...turni,
-      [dipendentiId]: {
-        ...turni[dipendentiId],
+      [dipendenteId]: {
+        ...turni[dipendenteId],
         [giorno]: valore
       }
     });
   };
 
+  // Una sezione di tabella per reparto, saltando quelli senza personale
+  const gruppi = REPARTI
+    .map(reparto => ({
+      reparto,
+      membri: dipendenti.filter(d => repartoDi(d) === reparto)
+    }))
+    .filter(g => g.membri.length > 0);
+
   return (
-    <section className="section turni-section">
-      <h2>📅 Turni Settimanali</h2>
+    <section className="card">
+      <div className="card-head">
+        <div>
+          <h2>Turni settimanali</h2>
+          <p className="card-sub">Il turno di ogni persona, reparto per reparto</p>
+        </div>
+        <div className="legenda">
+          {TURNI.map(t => (
+            <span key={t.valore} className={`legenda-voce ${t.classe}`}>
+              <i className="punto" />
+              {t.valore}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {dipendenti.length === 0 ? (
-        <p className="empty">Nessun dipendente. Aggiungine uno per iniziare!</p>
+        <div className="vuoto">
+          <div className="vuoto-icona">📋</div>
+          <p className="vuoto-titolo">Nessun dipendente</p>
+          <p className="vuoto-testo">Aggiungine uno dal menu per costruire la settimana.</p>
+        </div>
       ) : (
-        <div className="turni-table-container">
-          <table className="turni-table">
+        <div className="tabella-scroll">
+          <table className="tabella tabella-turni">
             <thead>
               <tr>
-                <th>Dipendente</th>
-                {giorniLabel.map((g, idx) => (
-                  <th key={idx} className={giorniChiusura.includes(giorni[idx]) ? 'chiuso' : ''}>
-                    {g}
-                    {giorniChiusura.includes(giorni[idx]) && <span className="closed-badge">CHIUSO</span>}
-                  </th>
-                ))}
+                <th className="col-nome">Dipendente</th>
+                {giorniLabel.map((label, idx) => {
+                  const chiuso = giorniChiusura.includes(giorni[idx]);
+                  return (
+                    <th key={giorni[idx]} className={chiuso ? 'chiuso' : ''}>
+                      <span className="giorno-nome">{label}</span>
+                      {chiuso && <span className="badge-chiuso">Chiuso</span>}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
-            <tbody>
-              {dipendenti.map(dip => (
-                <tr key={dip.id}>
-                  <td className="nome-dipendente">{dip.nome}</td>
-                  {giorni.map((giorno, idx) => (
-                    <td key={idx} className={giorniChiusura.includes(giorno) ? 'chiuso' : ''}>
-                      <select
-                        value={turni[dip.id]?.[giorno] || ''}
-                        onChange={(e) => handleTurnoChange(dip.id, giorno, e.target.value)}
-                        disabled={giorniChiusura.includes(giorno)}
-                        className={giorniChiusura.includes(giorno) ? 'disabled' : ''}
-                      >
-                        <option value="Mattina">Mattina</option>
-                        <option value="Sera">Sera</option>
-                        <option value="Riposo">Riposo</option>
-                      </select>
-                    </td>
-                  ))}
+
+            {gruppi.map(({ reparto, membri }) => (
+              <tbody key={reparto}>
+                <tr className="riga-gruppo">
+                  <th scope="rowgroup" className="col-nome">
+                    <span className={`pill-reparto rep-${slugReparto(reparto)}`}>{reparto}</span>
+                  </th>
+                  <td colSpan={giorni.length} className="cella-gruppo">
+                    {membri.length} {membri.length === 1 ? 'persona' : 'persone'}
+                  </td>
                 </tr>
-              ))}
-            </tbody>
+
+                {membri.map(dip => (
+                  <tr key={dip.id}>
+                    <td className="col-nome">
+                      <div className="persona">
+                        <Avatar nome={dip.nome} />
+                        <span className="persona-nome">{dip.nome}</span>
+                      </div>
+                    </td>
+                    {giorni.map(giorno => {
+                      const chiuso = giorniChiusura.includes(giorno);
+                      const valore = turni[dip.id]?.[giorno] || 'Riposo';
+                      return (
+                        <td key={giorno} className={chiuso ? 'chiuso' : ''}>
+                          {chiuso ? (
+                            <span className="turno-chiuso">—</span>
+                          ) : (
+                            <select
+                              className={`turno-select ${classeTurno(valore)}`}
+                              value={valore}
+                              onChange={(e) => handleTurnoChange(dip.id, giorno, e.target.value)}
+                              aria-label={`Turno di ${dip.nome}`}
+                            >
+                              {TURNI.map(t => (
+                                <option key={t.valore} value={t.valore}>{t.valore}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
         </div>
       )}

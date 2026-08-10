@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
-
-const GIORNI = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
-const GIORNI_LABEL = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+import {
+  GIORNI,
+  GIORNI_LABEL,
+  REPARTI,
+  REPARTO_PREDEFINITO,
+  repartoDi,
+  slugReparto
+} from './costanti';
 
 const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
@@ -20,12 +25,19 @@ const salvato = (() => {
   }
 })();
 
+// I dipendenti salvati prima dei reparti ne ricevono uno predefinito
+const dipendentiIniziali = (salvato.dipendenti || []).map(d => ({
+  ...d,
+  reparto: repartoDi(d)
+}));
+
 function App() {
-  const [dipendenti, setDipendenti] = useState(salvato.dipendenti || []);
+  const [dipendenti, setDipendenti] = useState(dipendentiIniziali);
   const [turni, setTurni] = useState(salvato.turni || {});
   const [ferie, setFerie] = useState(salvato.ferie || {});
   const [giorniChiusura, setGiorniChiusura] = useState(salvato.giorniChiusura || []);
   const [nuovoDipendente, setNuovoDipendente] = useState('');
+  const [nuovoReparto, setNuovoReparto] = useState(REPARTO_PREDEFINITO);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
@@ -58,7 +70,7 @@ function App() {
     if (!nome) return;
 
     const newId = Date.now().toString();
-    setDipendenti([...dipendenti, { id: newId, nome, giorni_ferie: 20 }]);
+    setDipendenti([...dipendenti, { id: newId, nome, reparto: nuovoReparto, giorni_ferie: 20 }]);
     setTurni({
       ...turni,
       [newId]: {
@@ -87,6 +99,10 @@ function App() {
     setFerie(newFerie);
   };
 
+  const cambiaReparto = (id, reparto) => {
+    setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
+  };
+
   const toggleGiornoChiusura = (giorno) => {
     setGiorniChiusura(
       giorniChiusura.includes(giorno)
@@ -101,27 +117,39 @@ function App() {
     if (isMobile()) setSidebarOpen(false);
   };
 
+  const apriPannello = (setter) => {
+    setter(true);
+    if (isMobile()) setSidebarOpen(false);
+  };
+
   const labelDiChiusura = giorniChiusura
     .map(g => GIORNI_LABEL[GIORNI.indexOf(g)])
-    .filter(Boolean)
-    .join(', ');
+    .filter(Boolean);
+
+  const conteggioReparti = REPARTI.map(r => ({
+    reparto: r,
+    quanti: dipendenti.filter(d => repartoDi(d) === r).length
+  }));
 
   return (
     <div className="app">
-      {/* Sidebar */}
+      {/* ---------- Menu laterale ---------- */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header">
-          <h1>Pizzeria</h1>
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(false)}
-            title="Chiudi menu"
-          >
-            ◀
+        <div className="sidebar-head">
+          <div className="logo">
+            <span className="logo-mark">🍕</span>
+            <span className="logo-testo">
+              <strong>Pizzeria</strong>
+              <small>Personale e ferie</small>
+            </span>
+          </div>
+          <button className="icon-btn chiudi-menu" onClick={() => setSidebarOpen(false)} title="Chiudi menu">
+            ✕
           </button>
         </div>
 
         <nav className="sidebar-nav">
+          <p className="nav-label">Gestione</p>
           <button
             className={`nav-item ${activeSection === 'turni' ? 'active' : ''}`}
             onClick={() => vaiA('turni')}
@@ -136,48 +164,56 @@ function App() {
             <span className="nav-icon">🏖️</span>
             <span className="nav-text">Ferie</span>
           </button>
-          <button
-            className={`nav-item ${showGiorniDrawer ? 'active' : ''}`}
-            onClick={() => setShowGiorniDrawer(true)}
-          >
+
+          <p className="nav-label">Impostazioni</p>
+          <button className="nav-item" onClick={() => apriPannello(setShowGiorniDrawer)}>
             <span className="nav-icon">🚫</span>
-            <span className="nav-text">Giorni Chiusi</span>
-          </button>
-          <button
-            className="nav-item add-dipendente-btn"
-            onClick={() => setShowAddDrawer(true)}
-          >
-            <span className="nav-icon">➕</span>
-            <span className="nav-text">Aggiungi Dipendente</span>
+            <span className="nav-text">Giorni di chiusura</span>
+            {giorniChiusura.length > 0 && <span className="nav-conteggio">{giorniChiusura.length}</span>}
           </button>
         </nav>
 
-        <div className="sidebar-footer">
-          <p className="dipendenti-count">
-            <span className="icon">👥</span>
-            <span className="text">
-              {dipendenti.length} {dipendenti.length === 1 ? 'dipendente' : 'dipendenti'}
-            </span>
-          </p>
+        <div className="sidebar-foot">
+          {dipendenti.length > 0 && (
+            <ul className="riepilogo-reparti">
+              {conteggioReparti.map(({ reparto, quanti }) => (
+                <li key={reparto}>
+                  <span className={`punto-reparto rep-${slugReparto(reparto)}`} />
+                  <span className="riepilogo-nome">{reparto}</span>
+                  <span className="riepilogo-num">{quanti}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button className="btn btn-primario btn-blocco" onClick={() => apriPannello(setShowAddDrawer)}>
+            <span>＋</span> Aggiungi dipendente
+          </button>
         </div>
       </aside>
 
-      {/* Overlay del menu (solo mobile, via CSS) */}
-      {sidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-      )}
+      {/* Sfondo scuro dietro al menu (solo mobile) */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
+      {/* ---------- Contenuto ---------- */}
       <div className="main-wrapper">
-        <header className="header">
-          <button
-            className="menu-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            title="Apri menu"
-          >
+        <header className="topbar">
+          <button className="icon-btn menu-toggle" onClick={() => setSidebarOpen(true)} title="Apri menu">
             ☰
           </button>
-          <h1>Gestione Pizzeria</h1>
-          <div className="header-spacer" />
+          <h1 className="topbar-titolo">Gestione Pizzeria</h1>
+          <div className="topbar-chip-area">
+            <span className="chip">
+              <span className="chip-icona">👥</span>
+              {dipendenti.length}
+            </span>
+            {labelDiChiusura.length > 0 && (
+              <span className="chip chip-avviso" title={`Chiuso: ${labelDiChiusura.join(', ')}`}>
+                <span className="chip-icona">🚫</span>
+                {labelDiChiusura.map(g => g.slice(0, 3)).join(' · ')}
+              </span>
+            )}
+          </div>
         </header>
 
         <main className="container">
@@ -199,72 +235,95 @@ function App() {
               setFerie={setFerie}
               setDipendenti={setDipendenti}
               eliminaDipendente={eliminaDipendente}
+              cambiaReparto={cambiaReparto}
             />
           )}
         </main>
       </div>
 
-      {/* Pannello Giorni di Chiusura */}
+      {/* ---------- Pannello: giorni di chiusura ---------- */}
       {showGiorniDrawer && (
         <>
           <div className="drawer-overlay" onClick={() => setShowGiorniDrawer(false)} />
-          <div className="drawer-bottom open">
+          <div className="drawer">
             <div className="drawer-handle" />
-            <div className="drawer-content">
-              <h2>Giorni di Chiusura</h2>
-              <div className="giorni-grid">
-                {GIORNI.map((giorno, idx) => (
-                  <label key={giorno} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={giorniChiusura.includes(giorno)}
-                      onChange={() => toggleGiornoChiusura(giorno)}
-                    />
-                    <span>{GIORNI_LABEL[idx]}</span>
-                  </label>
-                ))}
+            <div className="drawer-body">
+              <div className="drawer-head">
+                <h2>Giorni di chiusura</h2>
+                <button className="icon-btn" onClick={() => setShowGiorniDrawer(false)} title="Chiudi">✕</button>
               </div>
-              {giorniChiusura.length > 0 && (
-                <p className="info">Giorni chiusi: {labelDiChiusura}</p>
-              )}
-              <button
-                className="drawer-close-btn"
-                onClick={() => setShowGiorniDrawer(false)}
-              >
-                Chiudi
+              <p className="drawer-sub">Nei giorni selezionati i turni vengono disattivati.</p>
+
+              <div className="giorni-grid">
+                {GIORNI.map((giorno, idx) => {
+                  const attivo = giorniChiusura.includes(giorno);
+                  return (
+                    <label key={giorno} className={`giorno-scelta ${attivo ? 'attivo' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={attivo}
+                        onChange={() => toggleGiornoChiusura(giorno)}
+                      />
+                      <span className="segno" />
+                      <span>{GIORNI_LABEL[idx]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <button className="btn btn-primario btn-blocco" onClick={() => setShowGiorniDrawer(false)}>
+                Fatto
               </button>
             </div>
           </div>
         </>
       )}
 
-      {/* Pannello Aggiungi Dipendente */}
+      {/* ---------- Pannello: aggiungi dipendente ---------- */}
       {showAddDrawer && (
         <>
           <div className="drawer-overlay" onClick={() => setShowAddDrawer(false)} />
-          <div className="drawer-bottom open">
+          <div className="drawer">
             <div className="drawer-handle" />
-            <div className="drawer-content">
-              <h2>Aggiungi Dipendente</h2>
-              <div className="input-group">
-                <input
-                  type="text"
-                  value={nuovoDipendente}
-                  onChange={(e) => setNuovoDipendente(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
-                  placeholder="Nome dipendente..."
-                  autoFocus
-                />
-                <button onClick={aggiungiDipendente}>Aggiungi</button>
+            <div className="drawer-body">
+              <div className="drawer-head">
+                <h2>Aggiungi dipendente</h2>
+                <button className="icon-btn" onClick={() => setShowAddDrawer(false)} title="Chiudi">✕</button>
               </div>
-              <p className="info">
-                In organico: {dipendenti.length} {dipendenti.length === 1 ? 'persona' : 'persone'}
-              </p>
+              <p className="drawer-sub">Parte con 20 giorni di ferie, modificabili in seguito.</p>
+
+              <input
+                className="campo"
+                type="text"
+                value={nuovoDipendente}
+                onChange={(e) => setNuovoDipendente(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
+                placeholder="Nome e cognome"
+                autoFocus
+              />
+
+              <div className="scelta-reparto">
+                <span className="campo-label">Reparto</span>
+                <div className="segmenti">
+                  {REPARTI.map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      className={`segmento ${nuovoReparto === r ? `attivo rep-${slugReparto(r)}` : ''}`}
+                      onClick={() => setNuovoReparto(r)}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
-                className="drawer-close-btn"
-                onClick={() => setShowAddDrawer(false)}
+                className="btn btn-primario btn-blocco"
+                onClick={aggiungiDipendente}
+                disabled={!nuovoDipendente.trim()}
               >
-                Chiudi
+                Aggiungi in {nuovoReparto}
               </button>
             </div>
           </div>
