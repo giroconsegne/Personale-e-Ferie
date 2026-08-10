@@ -13,6 +13,290 @@ body {
 .app {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  color: white;
+  padding: 20px 0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.15);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+  box-shadow: none;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h1 {
+  font-size: 1.5em;
+  font-weight: 800;
+  margin: 0;
+}
+
+.sidebar-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: transparent;
+  border: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.nav-icon {
+  font-size: 1.3em;
+  min-width: 24px;
+}
+
+.nav-text {
+  white-space: nowrap;
+}
+
+.add-dipendente-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  margin-top: auto;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.add-dipendente-btn:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+.add-dipendente-btn.active {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+}
+
+.sidebar-footer {
+  padding: 20px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dipendenti-count {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95em;
+  margin: 0;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.dipendenti-count .icon {
+  font-size: 1.3em;
+}
+
+/* Giorni Chiusura nel Sidebar */
+.sidebar-dropdown {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin: 20px 12px 0 !important;
+  box-shadow: none !important;
+  padding: 16px !important;
+  max-height: 300px;
+  min-width: unset !important;
+  max-width: unset !important;
+}
+
+.sidebar-dropdown h3 {
+  color: white;
+  font-size: 0.95em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-dropdown .dropdown-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.sidebar-dropdown .dropdown-item {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.sidebar-dropdown .dropdown-item:hover {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: white !important;
+}
+
+.sidebar-dropdown .dropdown-item input[type="checkbox"]:checked + span {
+  color: #ef4444;
+}
+
+/* Main Wrapper */
+.main-wrapper {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.closed ~ .main-wrapper {
+  margin-left: 0;
+}
+
+/* Header */
+.header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.menu-toggle {
+  background: #f1f5f9;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.3em;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  display: none;
+}
+
+.menu-toggle:hover {
+  background: #e2e8f0;
+}
+
+.header h1 {
+  font-size: 1.8em;
+  margin: 0;
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .main-wrapper {
+    margin-left: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    transform: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sidebar.closed {
+    transform: none;
+    display: none;
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-header {
+    justify-content: space-between;
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .header {
+    padding: 15px 20px;
+  }
+
+  .header h1 {
+    font-size: 1.4em;
+  }
 }
 
 .header {
@@ -51,12 +335,49 @@ body {
   font-weight: 500;
   position: relative;
   z-index: 1;
+  margin-bottom: 20px;
+}
+
+.header-select-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.header-select {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-select:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.select-arrow {
+  font-size: 0.8em;
+  transition: transform 0.3s ease;
+}
+
+.header-select.open .select-arrow {
+  transform: rotate(180deg);
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 40px auto;
   padding: 0 20px;
+  flex: 1;
 }
 
 .section {
@@ -591,5 +912,232 @@ button.active:hover {
 
   .edit-giorni {
     flex-wrap: wrap;
+  }
+
+  .fab-button {
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+  }
+
+  .drawer-bottom {
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px 30px;
+  }
+
+  .drawer-content h2 {
+    font-size: 1.4em;
+  }
+
+  .drawer-close-btn {
+    width: 100%;
+  }
+}
+
+
+/* Drawer Overlay */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Drawer Bottom */
+.drawer-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 24px 24px 40px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 101;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.15);
+}
+
+.drawer-bottom.open {
+  transform: translateY(0);
+}
+
+.drawer-handle {
+  width: 40px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.drawer-content h2 {
+  font-size: 1.6em;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.drawer-content .input-group {
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.drawer-content input {
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1em;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.drawer-content input::placeholder {
+  color: #94a3b8;
+}
+
+.drawer-content input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  background: white;
+}
+
+.drawer-content button {
+  padding: 14px 20px;
+  font-size: 1em;
+  width: 100%;
+}
+
+.drawer-close-btn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
+}
+
+.drawer-close-btn:hover {
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
+}
+
+.drawer-content .info {
+  color: #475569;
+  background: #f1f5f9;
+  border-left-color: #ef4444;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Dropdown Giorni Chiusura */
+.giorni-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.2);
+  border: 1px solid #e2e8f0;
+  min-width: 360px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 102;
+  transform: translateY(-15px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.giorni-dropdown.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dropdown-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dropdown-item {
+  padding: 12px 14px;
+  font-size: 0.9em;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.dropdown-item input[type="checkbox"] {
+  cursor: pointer;
+  margin-right: 6px;
+  accent-color: #ef4444;
+}
+
+.dropdown-item input[type="checkbox"]:checked + span {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.dropdown-footer {
+  font-size: 0.85em;
+  color: #475569;
+  padding: 10px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .giorni-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: unset;
+    border-radius: 16px 16px 0 0;
+    max-height: 70vh;
+    transform: translateY(100%);
+  }
+
+  .giorni-dropdown.open {
+    transform: translateY(0);
+  }
+
+  .dropdown-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
