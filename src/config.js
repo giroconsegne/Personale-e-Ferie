@@ -1,12 +1,11 @@
 // Collegamento al database condiviso (Supabase).
 //
 // Finché questi due valori restano vuoti l'app salva soltanto dentro il
-// browser di chi la apre, come ha sempre fatto. Appena vengono compilati,
-// i dati diventano gli stessi per tutti quelli che aprono il link.
+// browser di chi la apre. Compilati, i dati diventano gli stessi per
+// tutti quelli che aprono il link.
 //
-// Si trovano in Supabase: Project Settings -> API
-//   URL      -> "Project URL"
-//   CHIAVE   -> "anon public"  (NON la chiave "service_role")
+// La chiave "publishable" è fatta per stare dentro le pagine web: non è
+// un segreto. Quella "secret" invece non va mai messa qui.
 
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://yunnfqlrlrbbbnubnlhl.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_ce400jVdwQAv7xxAnOxE3w_De4qsfag';
