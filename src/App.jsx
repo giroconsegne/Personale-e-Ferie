@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
@@ -13,32 +13,20 @@ import {
   repartoDi,
   slugReparto
 } from './costanti';
+import { carica, salva, ascolta, online } from './archivio';
 
 const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
-const STORAGE_KEY = 'pizzeriaApp';
-
-// Letto una sola volta al caricamento della pagina: lo stato parte già
-// dai dati salvati, così il salvataggio automatico non può sovrascriverli.
-const salvato = (() => {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch {
-    return {};
-  }
-})();
-
 // I dipendenti salvati prima dei reparti ne ricevono uno predefinito
-const dipendentiIniziali = (salvato.dipendenti || []).map(d => ({
-  ...d,
-  reparto: repartoDi(d)
-}));
+const conReparto = (elenco) => (elenco || []).map(d => ({ ...d, reparto: repartoDi(d) }));
 
 function App() {
-  const [dipendenti, setDipendenti] = useState(dipendentiIniziali);
-  const [turni, setTurni] = useState(salvato.turni || {});
-  const [ferie, setFerie] = useState(salvato.ferie || {});
-  const [giorniChiusura, setGiorniChiusura] = useState(salvato.giorniChiusura || []);
+  const [dipendenti, setDipendenti] = useState([]);
+  const [turni, setTurni] = useState({});
+  const [ferie, setFerie] = useState({});
+  const [giorniChiusura, setGiorniChiusura] = useState([]);
+  const [caricato, setCaricato] = useState(false);
+  const [problemaRete, setProblemaRete] = useState(false);
   const [nuovoDipendente, setNuovoDipendente] = useState('');
   const [nuovoReparto, setNuovoReparto] = useState(REPARTO_PREDEFINITO);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
@@ -46,15 +34,65 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const [activeSection, setActiveSection] = useState('turni');
 
-  // Salva i dati a ogni modifica
+  // Ultimo contenuto scritto o ricevuto: evita di rimandare al database
+  // dati identici a quelli appena arrivati da un altro dispositivo.
+  const ultimoSincronizzato = useRef(null);
+
+  const applica = (dati) => {
+    ultimoSincronizzato.current = JSON.stringify(dati);
+    setDipendenti(conReparto(dati.dipendenti));
+    setTurni(dati.turni || {});
+    setFerie(dati.ferie || {});
+    setGiorniChiusura(dati.giorniChiusura || []);
+  };
+
+  // Primo caricamento
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      dipendenti,
-      turni,
-      ferie,
-      giorniChiusura
-    }));
-  }, [dipendenti, turni, ferie, giorniChiusura]);
+    let annullato = false;
+
+    (async () => {
+      try {
+        const dati = await carica();
+        if (!annullato) applica(dati);
+      } catch (e) {
+        console.error('Caricamento fallito', e);
+        if (!annullato) setProblemaRete(true);
+      } finally {
+        if (!annullato) setCaricato(true);
+      }
+    })();
+
+    return () => { annullato = true; };
+  }, []);
+
+  // Modifiche fatte da altri dispositivi
+  useEffect(() => {
+    if (!caricato) return;
+    return ascolta(applica);
+  }, [caricato]);
+
+  // Salvataggio: parte solo a caricamento concluso, così non sovrascrive
+  // i dati appena letti, ed è ritardato per non scrivere a ogni tasto.
+  useEffect(() => {
+    if (!caricato) return;
+
+    const dati = { dipendenti, turni, ferie, giorniChiusura };
+    const serializzato = JSON.stringify(dati);
+    if (serializzato === ultimoSincronizzato.current) return;
+
+    const timer = setTimeout(async () => {
+      ultimoSincronizzato.current = serializzato;
+      try {
+        await salva(dati);
+        setProblemaRete(false);
+      } catch (e) {
+        console.error('Salvataggio fallito', e);
+        setProblemaRete(true);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [caricato, dipendenti, turni, ferie, giorniChiusura]);
 
   // Esc chiude i pannelli aperti
   useEffect(() => {
@@ -220,6 +258,21 @@ function App() {
           </button>
           <h1 className="topbar-titolo">Gestione Pizzeria</h1>
           <div className="topbar-chip-area">
+            <span
+              className={`chip ${problemaRete ? 'chip-avviso' : online ? 'chip-online' : 'chip-locale'}`}
+              title={
+                problemaRete
+                  ? 'Dati non sincronizzati: al momento salvati solo su questo dispositivo'
+                  : online
+                    ? 'I dati sono condivisi con chiunque apra il link'
+                    : 'I dati restano solo in questo browser'
+              }
+            >
+              <span className="chip-icona">{problemaRete ? '⚠️' : online ? '☁️' : '📱'}</span>
+              <span className="chip-testo">
+                {problemaRete ? 'Non sincronizzato' : online ? 'Condiviso' : 'Solo qui'}
+              </span>
+            </span>
             <span className="chip">
               <span className="chip-icona">👥</span>
               {dipendenti.length}
@@ -234,7 +287,16 @@ function App() {
         </header>
 
         <main className="container">
-          {activeSection === 'turni' && (
+          {!caricato && (
+            <section className="card">
+              <div className="vuoto">
+                <div className="vuoto-icona">⏳</div>
+                <p className="vuoto-titolo">Carico i dati…</p>
+              </div>
+            </section>
+          )}
+
+          {caricato && activeSection === 'turni' && (
             <TurniSection
               dipendenti={dipendenti}
               turni={turni}
@@ -245,7 +307,7 @@ function App() {
             />
           )}
 
-          {activeSection === 'ferie' && (
+          {caricato && activeSection === 'ferie' && (
             <FerieSection
               dipendenti={dipendenti}
               ferie={ferie}
@@ -254,7 +316,7 @@ function App() {
             />
           )}
 
-          {activeSection === 'calendario' && (
+          {caricato && activeSection === 'calendario' && (
             <CalendarioSection
               dipendenti={dipendenti}
               ferie={ferie}
@@ -262,7 +324,7 @@ function App() {
             />
           )}
 
-          {activeSection === 'resoconto' && (
+          {caricato && activeSection === 'resoconto' && (
             <ResocontoSection
               dipendenti={dipendenti}
               turni={turni}
@@ -271,7 +333,7 @@ function App() {
             />
           )}
 
-          {activeSection === 'impostazioni' && (
+          {caricato && activeSection === 'impostazioni' && (
             <ImpostazioniSection
               dipendenti={dipendenti}
               setDipendenti={setDipendenti}
