@@ -16,11 +16,31 @@ const localeVuoto = ({ id, nome }) => ({
   id,
   nome,
   dipendenti: [],
-  turni: {},
   settimane: {},
   ferie: {},
-  giorniChiusura: []
+  aperture: {}
 });
+
+/**
+ * Gli orari di apertura hanno preso il posto del semplice elenco di giorni
+ * di chiusura: i giorni che erano chiusi restano chiusi, gli altri partono
+ * aperti a pranzo e a cena.
+ */
+const conAperture = (locale) => {
+  const sistemato = { ...locale };
+
+  // attenzione: una pizzeria appena creata ha già `aperture`, ma vuoto;
+  // gli orari vanno ricavati dai vecchi giorni di chiusura anche in quel caso
+  if (Object.keys(sistemato.aperture || {}).length === 0) {
+    const aperture = {};
+    (sistemato.giorniChiusura || []).forEach(g => { aperture[g] = 'chiuso'; });
+    sistemato.aperture = aperture;
+  }
+
+  delete sistemato.giorniChiusura; // sostituito dagli orari di apertura
+  delete sistemato.turni; // i turni fissi: ora ogni settimana ha i suoi
+  return sistemato;
+};
 
 export const statoVuoto = () => ({ locali: LOCALI.map(localeVuoto) });
 
@@ -34,19 +54,20 @@ const normalizza = (dati) => {
 
   if (Array.isArray(dati.locali)) {
     return {
-      locali: LOCALI.map((base, i) => ({ ...localeVuoto(base), ...(dati.locali[i] || {}), id: base.id }))
+      locali: LOCALI.map((base, i) =>
+        conAperture({ ...localeVuoto(base), ...(dati.locali[i] || {}), id: base.id })
+      )
     };
   }
 
   const stato = statoVuoto();
-  stato.locali[0] = {
+  stato.locali[0] = conAperture({
     ...stato.locali[0],
     dipendenti: dati.dipendenti || [],
-    turni: dati.turni || {},
     settimane: dati.settimane || {},
     ferie: dati.ferie || {},
     giorniChiusura: dati.giorniChiusura || []
-  };
+  });
   return stato;
 };
 

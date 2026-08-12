@@ -9,15 +9,28 @@ const ALTEZZA_OPZIONE = 40;
  * La lista viene montata in fondo al body così non viene tagliata
  * dai contenitori che scorrono (le tabelle).
  */
-export default function Select({ valore, opzioni, onChange, classe = '', etichettaAria }) {
+export default function Select({
+  valore,
+  opzioni,
+  onChange,
+  classe = '',
+  etichettaAria,
+  etichettaFuoriElenco
+}) {
   const [aperto, setAperto] = useState(false);
   const [evidenziato, setEvidenziato] = useState(0);
 
   const triggerRef = useRef(null);
   const popupRef = useRef(null);
 
-  const indiceCorrente = Math.max(0, opzioni.findIndex(o => o.valore === valore));
-  const corrente = opzioni[indiceCorrente] || opzioni[0];
+  const trovato = opzioni.findIndex(o => o.valore === valore);
+  const indiceCorrente = Math.max(0, trovato);
+
+  // un valore non più in elenco (turno tolto da questa pizzeria) va
+  // comunque mostrato per quello che è, non scambiato con il primo
+  const corrente = trovato >= 0
+    ? opzioni[trovato]
+    : { valore, etichetta: etichettaFuoriElenco ?? '' };
 
   const soloChiudi = useCallback(() => setAperto(false), []);
 

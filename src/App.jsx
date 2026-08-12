@@ -6,13 +6,17 @@ import CalendarioSection from './components/CalendarioSection';
 import ResocontoSection from './components/ResocontoSection';
 import ImpostazioniSection from './components/ImpostazioniSection';
 import {
+  APERTURE,
   GIORNI,
   GIORNI_LABEL,
   LOCALI,
   REPARTI,
   REPARTO_PREDEFINITO,
+  aperturaDi,
+  giorniChiusuraDa,
   repartoDi,
-  slugReparto
+  slugReparto,
+  turniDelLocale
 } from './costanti';
 import { carica, salva, ascolta, online, statoVuoto } from './archivio';
 
@@ -51,17 +55,18 @@ function App() {
   // ---- la pizzeria che si sta guardando ----
   const indiceLocale = Math.max(0, locali.findIndex(l => l.id === idLocale));
   const locale = locali[indiceLocale];
-  const { dipendenti, turni, settimane, ferie, giorniChiusura } = locale;
+  const { dipendenti, settimane, ferie, aperture } = locale;
+
+  // i giorni chiusi si ricavano dagli orari: il resto dell'app ragiona su quelli
+  const giorniChiusura = giorniChiusuraDa(aperture);
 
   // Ogni modifica tocca solo la pizzeria aperta
   const modificaLocale = (campi) =>
     setLocali(prima => prima.map((l, i) => (i === indiceLocale ? { ...l, ...campi } : l)));
 
   const setDipendenti = (v) => modificaLocale({ dipendenti: v });
-  const setTurni = (v) => modificaLocale({ turni: v });
   const setSettimane = (v) => modificaLocale({ settimane: v });
   const setFerie = (v) => modificaLocale({ ferie: v });
-  const setGiorniChiusura = (v) => modificaLocale({ giorniChiusura: v });
 
   const cambiaPizzeria = (id) => {
     setIdLocale(id);
@@ -144,18 +149,6 @@ function App() {
 
     const newId = Date.now().toString();
     setDipendenti([...dipendenti, { id: newId, nome, reparto: nuovoReparto, giorni_ferie: 20 }]);
-    setTurni({
-      ...turni,
-      [newId]: {
-        lunedi: 'Mattina',
-        martedi: 'Mattina',
-        mercoledi: 'Mattina',
-        giovedi: 'Mattina',
-        venerdi: 'Mattina',
-        sabato: 'Sera',
-        domenica: 'Riposo'
-      }
-    });
     setFerie({ ...ferie, [newId]: [] });
     setNuovoDipendente('');
     setShowAddDrawer(false);
@@ -186,12 +179,8 @@ function App() {
     setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
   };
 
-  const toggleGiornoChiusura = (giorno) => {
-    setGiorniChiusura(
-      giorniChiusura.includes(giorno)
-        ? giorniChiusura.filter(g => g !== giorno)
-        : [...giorniChiusura, giorno]
-    );
+  const cambiaApertura = (giorno, valore) => {
+    modificaLocale({ aperture: { ...aperture, [giorno]: valore } });
   };
 
   // Su mobile il menu si richiude dopo la scelta
@@ -355,14 +344,15 @@ function App() {
           {caricato && activeSection === 'turni' && (
             <TurniSection
               dipendenti={dipendenti}
-              turni={turni}
               settimane={settimane}
               setSettimane={setSettimane}
               ferie={ferie}
               giorni={GIORNI}
               giorniLabel={GIORNI_LABEL}
               giorniChiusura={giorniChiusura}
+              aperture={aperture}
               nomeLocale={locale.nome}
+              turniDisponibili={turniDelLocale(locale.id)}
               avvisa={avvisa}
             />
           )}
@@ -388,7 +378,6 @@ function App() {
           {caricato && activeSection === 'resoconto' && (
             <ResocontoSection
               dipendenti={dipendenti}
-              turni={turni}
               settimane={settimane}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
@@ -403,6 +392,7 @@ function App() {
               eliminaDipendente={eliminaDipendente}
               cambiaReparto={cambiaReparto}
               giorniChiusura={giorniChiusura}
+              aperture={aperture}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}
             />
@@ -426,24 +416,33 @@ function App() {
             <div className="drawer-handle" />
             <div className="drawer-body">
               <div className="drawer-head">
-                <h2>Giorni di chiusura</h2>
+                <h2>Quando siamo aperti</h2>
                 <button className="icon-btn" onClick={() => setShowGiorniDrawer(false)} title="Chiudi">✕</button>
               </div>
-              <p className="drawer-sub">Nei giorni selezionati i turni vengono disattivati.</p>
+              <p className="drawer-sub">
+                Giorno per giorno: a pranzo si lavora di mattina, a cena di sera.
+                Nei giorni chiusi i turni sono disattivati e le ferie non vengono conteggiate.
+              </p>
 
-              <div className="giorni-grid">
+              <div className="elenco-aperture">
                 {GIORNI.map((giorno, idx) => {
-                  const attivo = giorniChiusura.includes(giorno);
+                  const scelta = aperturaDi(aperture, giorno);
                   return (
-                    <label key={giorno} className={`giorno-scelta ${attivo ? 'attivo' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={attivo}
-                        onChange={() => toggleGiornoChiusura(giorno)}
-                      />
-                      <span className="segno" />
-                      <span>{GIORNI_LABEL[idx]}</span>
-                    </label>
+                    <div key={giorno} className={`riga-apertura ${scelta === 'chiuso' ? 'chiusa' : ''}`}>
+                      <span className="apertura-giorno">{GIORNI_LABEL[idx]}</span>
+                      <div className="segmenti segmenti-apertura">
+                        {APERTURE.map(a => (
+                          <button
+                            key={a.valore}
+                            type="button"
+                            className={`segmento ${scelta === a.valore ? `attivo ap-${a.valore}` : ''}`}
+                            onClick={() => cambiaApertura(giorno, a.valore)}
+                          >
+                            {a.breve}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })}
               </div>

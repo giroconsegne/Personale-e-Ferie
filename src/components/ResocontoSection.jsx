@@ -10,7 +10,7 @@ const MESI = [
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ];
 
-export default function ResocontoSection({ dipendenti, turni, settimane, ferie, giorniChiusura }) {
+export default function ResocontoSection({ dipendenti, settimane, ferie, giorniChiusura }) {
   const oggi = new Date();
   const isoOggi = aIso(oggi);
   const [vista, setVista] = useState({ anno: oggi.getFullYear(), mese: oggi.getMonth() });
@@ -21,8 +21,8 @@ export default function ResocontoSection({ dipendenti, turni, settimane, ferie, 
     const primoDellAnno = aIso(new Date(vista.anno, 0, 1));
     const ultimoDellAnno = aIso(new Date(vista.anno, 11, 31));
 
-    // ogni giorno va letto dai turni validi in quella settimana
-    const leggiTurno = creaLettoreTurni(settimane, turni);
+    // ogni giorno va letto dai turni scritti per quella settimana
+    const leggiTurno = creaLettoreTurni(settimane);
 
     return dipendenti.map(dip => {
       const comuni = {
@@ -37,7 +37,7 @@ export default function ResocontoSection({ dipendenti, turni, settimane, ferie, 
         anno: conteggiaGiorni({ dal: primoDellAnno, al: ultimoDellAnno, ...comuni })
       };
     });
-  }, [dipendenti, turni, settimane, ferie, giorniChiusura, vista, isoOggi]);
+  }, [dipendenti, settimane, ferie, giorniChiusura, vista, isoOggi]);
 
   const totali = useMemo(
     () =>

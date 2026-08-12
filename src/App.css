@@ -2208,6 +2208,112 @@ h1, h2, h3 {
 }
 
 /* ============================================================
+   ORARI DI APERTURA
+   ============================================================ */
+.elenco-aperture {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.riga-apertura {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.riga-apertura.chiusa {
+  background: var(--avviso-chiaro);
+  border-color: #f0e0c2;
+}
+
+.apertura-giorno {
+  flex: 0 0 92px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.segmenti-apertura {
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface-3);
+}
+
+.segmento.attivo.ap-chiuso {
+  color: var(--avviso);
+  border-color: #eeddc2;
+}
+
+.segmento.attivo.ap-pranzo {
+  color: var(--mattina);
+  border-color: #f2dfbe;
+}
+
+.segmento.attivo.ap-cena {
+  color: var(--sera);
+  border-color: #dbd9f6;
+}
+
+.segmento.attivo.ap-entrambi {
+  color: var(--ok);
+  border-color: #c9e5d8;
+}
+
+/* riepilogo in Impostazioni */
+.elenco-aperture-riepilogo {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.elenco-aperture-riepilogo li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: 13.5px;
+}
+
+.elenco-aperture-riepilogo li.chiusa {
+  background: var(--avviso-chiaro);
+}
+
+.riepilogo-giorno {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.pill-orario {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--surface-3);
+  color: var(--testo-2);
+}
+
+.pill-orario.ap-entrambi { background: var(--ok-chiaro); color: var(--ok); }
+.pill-orario.ap-pranzo { background: var(--mattina-bg); color: var(--mattina); }
+.pill-orario.ap-cena { background: var(--sera-bg); color: var(--sera); }
+.pill-orario.ap-chiuso { background: var(--avviso); color: #fff; }
+
+/* nell'intestazione dei turni: giorni con orario ridotto */
+.badge-orario {
+  background: var(--surface-3);
+  color: var(--testo-2);
+}
+
+/* ============================================================
    BARRA DEI TURNI (legenda + azioni della settimana)
    ============================================================ */
 .barra-turni {
@@ -2560,6 +2666,17 @@ tr:hover .btn-invia,
   .riepilogo-mese { padding: 16px 14px 20px; }
 
   .giorni-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* su schermo stretto il giorno sta sopra la scelta dell'orario */
+  .riga-apertura {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+  }
+
+  .apertura-giorno { flex: none; }
+
+  .segmenti-apertura { grid-template-columns: repeat(2, 1fr); }
 
   .segmenti { gap: 4px; }
 

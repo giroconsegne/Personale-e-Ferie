@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import Avatar from './Avatar';
 import Select from './Select';
 import ScrollArea from './ScrollArea';
-import { GIORNI, GIORNI_LABEL, REPARTI, repartoDi, slugReparto } from '../costanti';
+import {
+  APERTURE,
+  GIORNI,
+  GIORNI_LABEL,
+  REPARTI,
+  aperturaDi,
+  repartoDi,
+  slugReparto
+} from '../costanti';
 import { contaFerie, ferieDellAnno, annoCorrente } from '../date';
 
 const OPZIONI_REPARTO = REPARTI.map(r => ({
@@ -18,6 +26,7 @@ export default function ImpostazioniSection({
   eliminaDipendente,
   cambiaReparto,
   giorniChiusura,
+  aperture,
   apriAggiungiDipendente,
   apriGiorniChiusura
 }) {
@@ -42,10 +51,6 @@ export default function ImpostazioniSection({
     eliminaDipendente(id);
     setDaEliminare(null);
   };
-
-  const labelChiusura = giorniChiusura
-    .map(g => GIORNI_LABEL[GIORNI.indexOf(g)])
-    .filter(Boolean);
 
   return (
     <>
@@ -157,22 +162,28 @@ export default function ImpostazioniSection({
       <section className="card">
         <div className="card-head">
           <div>
-            <h2>Giorni di chiusura</h2>
-            <p className="card-sub">Nei giorni di chiusura i turni sono disattivati e le ferie non vengono conteggiate</p>
+            <h2>Quando siamo aperti</h2>
+            <p className="card-sub">
+              Nei giorni chiusi i turni sono disattivati e le ferie non vengono conteggiate
+            </p>
           </div>
           <button className="btn btn-secondario" onClick={apriGiorniChiusura}>Modifica</button>
         </div>
 
         <div className="blocco-chiusura">
-          {labelChiusura.length === 0 ? (
-            <p className="dettaglio-vuoto">Nessun giorno di chiusura impostato.</p>
-          ) : (
-            <ul className="elenco-chiusura">
-              {labelChiusura.map(g => (
-                <li key={g} className="pill-chiusura">{g}</li>
-              ))}
-            </ul>
-          )}
+          <ul className="elenco-aperture-riepilogo">
+            {GIORNI.map((giorno, idx) => {
+              const scelta = aperturaDi(aperture, giorno);
+              return (
+                <li key={giorno} className={scelta === 'chiuso' ? 'chiusa' : ''}>
+                  <span className="riepilogo-giorno">{GIORNI_LABEL[idx]}</span>
+                  <span className={`pill-orario ap-${scelta}`}>
+                    {APERTURE.find(a => a.valore === scelta)?.etichetta}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
     </>

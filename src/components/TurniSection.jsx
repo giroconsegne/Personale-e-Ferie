@@ -4,14 +4,17 @@ import Select from './Select';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
 import {
+  APERTURE,
   GIORNI_SIGLA,
   REPARTI,
   TURNI,
+  aperturaDi,
   classeTurno,
   eLavorativo,
   etichettaTurno,
   repartoDi,
-  slugReparto
+  slugReparto,
+  turniDelGiorno
 } from '../costanti';
 import {
   dataBreve,
@@ -22,25 +25,40 @@ import {
 } from '../date';
 import { settimanaPropria, turniDellaSettimana, turnoDelGiorno } from '../turni';
 
-const OPZIONI_TURNO = TURNI.map(t => ({
+const comeOpzione = (t) => ({
   valore: t.valore,
   etichetta: t.etichetta,
   breve: t.breve,
   classe: t.classe
-}));
+});
+
+// Riposo e "non previsto" si possono sempre scegliere
+const SENZA_LAVORO = TURNI.filter(t => !eLavorativo(t.valore)).map(comeOpzione);
 
 export default function TurniSection({
   dipendenti,
-  turni,
   settimane,
   setSettimane,
   ferie,
   giorni,
   giorniLabel,
   giorniChiusura,
+  aperture,
   nomeLocale,
+  turniDisponibili,
   avvisa
 }) {
+  /**
+   * I turni scegliibili in un certo giorno: quelli previsti in questa
+   * pizzeria, ristretti all'orario di apertura (a pranzo solo mattina,
+   * a cena solo sera), più riposo e "non previsto".
+   */
+  const opzioniDelGiorno = (giorno) => [
+    ...turniDelGiorno(turniDisponibili, aperture, giorno)
+      .map(v => comeOpzione(TURNI.find(t => t.valore === v))),
+    ...SENZA_LAVORO
+  ];
+
   const [lunedi, setLunedi] = useState(lunediDiOggi);
   const [daSovrascrivere, setDaSovrascrivere] = useState(null);
   const [daConfermare, setDaConfermare] = useState(null);
@@ -49,8 +67,8 @@ export default function TurniSection({
   const propria = settimanaPropria(settimane, lunedi);
   const settimanaDiOggi = lunedi === lunediDiOggi();
 
-  // I turni effettivi della settimana mostrata, persona per persona
-  const turniDi = (dipId) => turniDellaSettimana(settimane, turni, dipId, lunedi);
+  // I turni scritti per la settimana mostrata, persona per persona
+  const turniDi = (dipId) => turniDellaSettimana(settimane, dipId, lunedi);
 
   const applicaTurno = (dipId, giorno, valore) => {
     setSettimane({
@@ -171,7 +189,7 @@ export default function TurniSection({
           <p className="card-sub">
             {propria
               ? 'Turni impostati per questa settimana'
-              : 'Turni ripresi dalla settimana precedente: modificane uno per cambiarli solo qui'}
+              : 'Settimana ancora da compilare: le caselle partono da «non previsto»'}
           </p>
         </div>
 
@@ -203,7 +221,7 @@ export default function TurniSection({
         <>
           <div className="barra-turni">
             <div className="legenda">
-              {TURNI.map(t => (
+              {TURNI.filter(t => turniDisponibili.includes(t.valore)).map(t => (
                 <span key={t.valore || 'vuoto'} className={`legenda-voce ${t.classe}`}>
                   <i className="punto" />
                   {t.etichetta}
@@ -227,12 +245,20 @@ export default function TurniSection({
                 <tr>
                   <th className="col-nome">Dipendente</th>
                   {giorniLabel.map((label, idx) => {
-                    const chiuso = giorniChiusura.includes(giorni[idx]);
+                    const apertura = aperturaDi(aperture, giorni[idx]);
+                    const chiuso = apertura === 'chiuso';
+                    // "pranzo e cena" è la normalità: si segnala solo il resto
+                    const daSegnalare = apertura !== 'entrambi';
+
                     return (
                       <th key={giorni[idx]} className={chiuso ? 'chiuso' : ''}>
                         <span className="giorno-nome">{label}</span>
                         <span className="giorno-data">{dataBreve(dateSettimana[idx])}</span>
-                        {chiuso && <span className="badge-chiuso">Chiuso</span>}
+                        {daSegnalare && (
+                          <span className={`badge-chiuso ${chiuso ? '' : 'badge-orario'}`}>
+                            {APERTURE.find(a => a.valore === apertura)?.breve}
+                          </span>
+                        )}
                       </th>
                     );
                   })}
@@ -288,10 +314,11 @@ export default function TurniSection({
                               ) : (
                                 <Select
                                   valore={valore}
-                                  opzioni={OPZIONI_TURNO}
+                                  opzioni={opzioniDelGiorno(giorno)}
                                   onChange={(v) => cambiaTurno(dip.id, giorno, v)}
                                   classe={`pillola ${classeTurno(valore)}`}
                                   etichettaAria={`Turno di ${dip.nome}`}
+                                  etichettaFuoriElenco={etichettaTurno(valore)}
                                 />
                               )}
                             </td>

@@ -10,9 +10,14 @@ export const GIORNI_SIGLA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
  * L'ordine conta: i dati salvati prima di questa divisione finiscono nella prima.
  */
 export const LOCALI = [
-  { id: 'dauria', nome: "Fratelli D'Auria" },
-  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella' }
+  // Da Fratelli D'Auria non si lavora di mattina: quel turno non compare
+  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Sera', 'Riposo', ''] },
+  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Riposo', ''] }
 ];
+
+/** I turni che si possono scegliere in una pizzeria. */
+export const turniDelLocale = (idLocale) =>
+  LOCALI.find(l => l.id === idLocale)?.turni || TURNI.map(t => t.valore);
 
 // Le mansioni sono salvate nel campo "reparto" dei dipendenti: il nome della
 // chiave resta quello di prima per non perdere i dati già inseriti.
@@ -37,13 +42,41 @@ export const TURNI = [
   { valore: '', etichetta: 'Non previsto', breve: '—', classe: 'turno-vuoto' }
 ];
 
-export const TURNO_PREDEFINITO = 'Riposo';
+// Un giorno di cui non è stato deciso niente è "non previsto"
+export const TURNO_PREDEFINITO = '';
 
 export const classeTurno = (valore) =>
-  TURNI.find(t => t.valore === valore)?.classe || 'turno-riposo';
+  TURNI.find(t => t.valore === valore)?.classe || 'turno-vuoto';
 
 export const etichettaTurno = (valore) =>
-  TURNI.find(t => t.valore === valore)?.etichetta || 'Riposo';
+  TURNI.find(t => t.valore === valore)?.etichetta || 'Non previsto';
 
 // Un turno vale come giorno di lavoro solo se non è riposo né "non previsto"
 export const eLavorativo = (turno) => turno === 'Mattina' || turno === 'Sera';
+
+/**
+ * Quando è aperta la pizzeria, giorno per giorno della settimana.
+ * A pranzo si lavora di mattina, a cena di sera: nei giorni di solo
+ * pranzo (o sola cena) l'altro turno non si può nemmeno scegliere.
+ */
+export const APERTURE = [
+  { valore: 'entrambi', etichetta: 'Pranzo e cena', breve: 'Pranzo e cena', turni: ['Mattina', 'Sera'] },
+  { valore: 'pranzo', etichetta: 'Solo pranzo', breve: 'Solo pranzo', turni: ['Mattina'] },
+  { valore: 'cena', etichetta: 'Solo cena', breve: 'Solo cena', turni: ['Sera'] },
+  { valore: 'chiuso', etichetta: 'Chiuso', breve: 'Chiuso', turni: [] }
+];
+
+export const APERTURA_PREDEFINITA = 'entrambi';
+
+export const aperturaDi = (aperture, giorno) =>
+  APERTURE.some(a => a.valore === aperture?.[giorno]) ? aperture[giorno] : APERTURA_PREDEFINITA;
+
+export const eChiusoIlGiorno = (aperture, giorno) => aperturaDi(aperture, giorno) === 'chiuso';
+
+/** I giorni della settimana in cui la pizzeria resta chiusa. */
+export const giorniChiusuraDa = (aperture) => GIORNI.filter(g => eChiusoIlGiorno(aperture, g));
+
+/** I turni di lavoro possibili in un certo giorno: pizzeria e orario insieme. */
+export const turniDelGiorno = (turniLocale, aperture, giorno) =>
+  (APERTURE.find(a => a.valore === aperturaDi(aperture, giorno))?.turni || [])
+    .filter(t => turniLocale.includes(t));
