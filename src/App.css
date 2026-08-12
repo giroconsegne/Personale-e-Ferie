@@ -2600,9 +2600,12 @@ tr:hover .btn-invia,
 }
 
 @media print {
+  /* Il margine lo mette il contenuto, non la pagina: nella finestra di
+     stampa la voce "Margini" spesso è su "Nessuno" e il margine della
+     pagina verrebbe ignorato. Così il bordo bianco c'è comunque. */
   @page {
     size: A4 portrait;
-    margin: 15mm;
+    margin: 0;
   }
 
   body {
@@ -2631,11 +2634,9 @@ tr:hover .btn-invia,
 
   .main-wrapper { margin-left: 0 !important; }
 
-  /* un filo di aria in più: tiene il foglio staccato dal bordo anche
-     quando nella finestra di stampa si sceglie "margini: nessuno" */
   .container {
     max-width: none;
-    padding: 4mm !important;
+    padding: 16mm 13mm 14mm !important;
   }
 
   .card {
