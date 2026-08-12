@@ -29,23 +29,6 @@ const OPZIONI_TURNO = TURNI.map(t => ({
   classe: t.classe
 }));
 
-/**
- * Numero pronto per WhatsApp: solo cifre, con prefisso internazionale.
- * Se non è già scritto con +39 o 0039 si assume un numero italiano.
- */
-function numeroWhatsApp(telefono) {
-  const scritto = (telefono || '').trim();
-  if (!scritto) return null;
-
-  const cifre = scritto.replace(/\D/g, '');
-  if (cifre.length < 6) return null;
-
-  if (scritto.startsWith('+')) return cifre;
-  if (cifre.startsWith('00')) return cifre.slice(2);
-  if (cifre.startsWith('39') && cifre.length >= 12) return cifre;
-  return `39${cifre}`;
-}
-
 export default function TurniSection({
   dipendenti,
   turni,
@@ -153,12 +136,6 @@ export default function TurniSection({
 
   const invia = async (dip) => {
     const testo = testoTurni(dip);
-    const numero = numeroWhatsApp(dip.telefono);
-
-    if (numero) {
-      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(testo)}`, '_blank', 'noopener');
-      return;
-    }
 
     if (navigator.share) {
       try {

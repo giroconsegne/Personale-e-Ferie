@@ -30,7 +30,6 @@ function App() {
   const [problemaRete, setProblemaRete] = useState(false);
   const [avviso, setAvviso] = useState('');
   const [nuovoDipendente, setNuovoDipendente] = useState('');
-  const [nuovoTelefono, setNuovoTelefono] = useState('');
   const [nuovoReparto, setNuovoReparto] = useState(REPARTO_PREDEFINITO);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
@@ -124,10 +123,7 @@ function App() {
     if (!nome) return;
 
     const newId = Date.now().toString();
-    setDipendenti([
-      ...dipendenti,
-      { id: newId, nome, telefono: nuovoTelefono.trim(), reparto: nuovoReparto, giorni_ferie: 20 }
-    ]);
+    setDipendenti([...dipendenti, { id: newId, nome, reparto: nuovoReparto, giorni_ferie: 20 }]);
     setTurni({
       ...turni,
       [newId]: {
@@ -142,7 +138,6 @@ function App() {
     });
     setFerie({ ...ferie, [newId]: [] });
     setNuovoDipendente('');
-    setNuovoTelefono('');
     setShowAddDrawer(false);
   };
 
@@ -169,10 +164,6 @@ function App() {
 
   const cambiaReparto = (id, reparto) => {
     setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
-  };
-
-  const cambiaTelefono = (id, telefono) => {
-    setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, telefono } : d)));
   };
 
   const toggleGiornoChiusura = (giorno) => {
@@ -375,7 +366,6 @@ function App() {
               ferie={ferie}
               eliminaDipendente={eliminaDipendente}
               cambiaReparto={cambiaReparto}
-              cambiaTelefono={cambiaTelefono}
               giorniChiusura={giorniChiusura}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}
@@ -451,15 +441,6 @@ function App() {
                 onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
                 placeholder="Nome e cognome"
                 autoFocus
-              />
-
-              <input
-                className="campo"
-                type="tel"
-                value={nuovoTelefono}
-                onChange={(e) => setNuovoTelefono(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
-                placeholder="Telefono per WhatsApp (facoltativo)"
               />
 
               <div className="scelta-reparto">

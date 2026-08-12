@@ -2213,11 +2213,6 @@ tr:hover .btn-invia,
   color: var(--ferie);
 }
 
-.valore-mancante {
-  color: var(--testo-3);
-  font-weight: 600;
-}
-
 /* ============================================================
    MESSAGGIO PASSEGGERO
    ============================================================ */
