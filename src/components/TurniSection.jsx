@@ -59,7 +59,6 @@ export default function TurniSection({
 }) {
   const [lunedi, setLunedi] = useState(lunediDiOggi);
   const [daSovrascrivere, setDaSovrascrivere] = useState(null);
-  const [daRipristinare, setDaRipristinare] = useState(false);
   const [daConfermare, setDaConfermare] = useState(null);
 
   const dateSettimana = giorniDellaSettimana(lunedi);
@@ -129,13 +128,6 @@ export default function TurniSection({
     const prossima = spostaSettimana(lunedi, 1);
     if (settimanaPropria(settimane, prossima)) setDaSovrascrivere(prossima);
     else scriviSettimana(prossima);
-  };
-
-  // Toglie i turni propri della settimana: torna a seguire quella precedente
-  const riprendiPrecedente = () => {
-    const ripulite = { ...settimane };
-    delete ripulite[lunedi];
-    setSettimane(ripulite);
   };
 
   /** Il testo da mandare al collaboratore su WhatsApp. */
@@ -242,11 +234,6 @@ export default function TurniSection({
             </div>
 
             <div className="azioni-turni">
-              {propria && (
-                <button className="btn btn-fantasma" onClick={() => setDaRipristinare(true)} title="Cancella i turni scritti per questa settimana">
-                  Riprendi la settimana precedente
-                </button>
-              )}
               <button className="btn btn-secondario" onClick={copiaSullaProssima}>
                 <span aria-hidden="true">📋</span> Copia sulla prossima
               </button>
@@ -374,25 +361,6 @@ export default function TurniSection({
           </Conferma>
         );
       })()}
-
-      {daRipristinare && (
-        <Conferma
-          titolo="Cancellare i turni di questa settimana?"
-          tono="pericolo"
-          conferma="Sì, cancellali"
-          annulla="No, li tengo"
-          onAnnulla={() => setDaRipristinare(false)}
-          onConferma={() => {
-            riprendiPrecedente();
-            setDaRipristinare(false);
-          }}
-        >
-          <p>
-            I turni scritti per la settimana {etichettaSettimana(lunedi)} vengono eliminati e
-            tornano quelli della settimana precedente.
-          </p>
-        </Conferma>
-      )}
 
       {daSovrascrivere && (
         <Conferma

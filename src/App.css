@@ -1231,19 +1231,6 @@ h1, h2, h3 {
   background: var(--border);
 }
 
-.btn-fantasma {
-  background: transparent;
-  border-color: transparent;
-  color: var(--testo-2);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.btn-fantasma:hover {
-  background: var(--surface-3);
-  color: var(--testo);
-}
-
 .btn-fantasma-rosso {
   background: transparent;
   border-color: transparent;
@@ -2549,6 +2536,7 @@ tr:hover .btn-invia,
 
   .azioni-turni .btn {
     flex: 1;
+    min-width: 0;
     justify-content: center;
     font-size: 12.5px;
   }
