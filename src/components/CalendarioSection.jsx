@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
-import { GIORNI, repartoDi, slugReparto } from '../costanti';
+import { GIORNI, TURNI, eLavorativo, repartoDi, slugReparto } from '../costanti';
+import { creaLettoreTurni } from '../turni';
 import {
   aData,
   aIso,
@@ -21,7 +22,22 @@ const SIGLE = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 // Lunedì = 0
 const indiceSettimana = (data) => (data.getDay() + 6) % 7;
 
-export default function CalendarioSection({ dipendenti, ferie, giorniChiusura }) {
+/**
+ * I gruppi in cui si dividono le persone in un certo giorno, nell'ordine
+ * in cui compaiono nella vista a settimana. Chi non è previsto quel
+ * giorno resta fuori: non aggiunge niente al quadro della giornata.
+ */
+const GRUPPI = [
+  ...TURNI.filter(t => eLavorativo(t.valore)).map(t => ({
+    chiave: t.valore,
+    titolo: t.etichetta,
+    classe: t.classe
+  })),
+  { chiave: 'Ferie', titolo: 'In ferie', classe: 'gruppo-ferie' },
+  { chiave: 'Riposo', titolo: 'Riposo', classe: 'turno-riposo' }
+];
+
+export default function CalendarioSection({ dipendenti, settimane, ferie, giorniChiusura }) {
   const oggi = new Date();
   const [vista, setVista] = useState({ anno: oggi.getFullYear(), mese: oggi.getMonth() });
   const [lunedi, setLunedi] = useState(lunediDiOggi);
@@ -55,6 +71,28 @@ export default function CalendarioSection({ dipendenti, ferie, giorniChiusura })
   }, [vista]);
 
   const celle = aSettimana ? giorniDellaSettimana(lunedi) : celleMese;
+
+  /**
+   * Il dettaglio di una giornata: chi lavora di mattina, chi di sera,
+   * chi è in ferie e chi riposa. Serve solo alla vista a settimana.
+   */
+  const dettaglioDelGiorno = useMemo(() => {
+    if (!aSettimana) return () => [];
+    const leggiTurno = creaLettoreTurni(settimane);
+
+    return (iso) => {
+      const per = {};
+      dipendenti.forEach(dip => {
+        const dove = (ferie[dip.id] || []).includes(iso) ? 'Ferie' : leggiTurno(dip.id, iso);
+        if (!dove) return; // non previsto: quel giorno non c'entra
+        (per[dove] = per[dove] || []).push(dip);
+      });
+
+      return GRUPPI
+        .map(g => ({ ...g, persone: per[g.chiave] || [] }))
+        .filter(g => g.persone.length > 0);
+    };
+  }, [aSettimana, dipendenti, settimane, ferie]);
 
   // aggiornamento funzionale: piu clic ravvicinati avanzano di un passo ciascuno
   const cambiaMese = (delta) => {
@@ -104,7 +142,11 @@ export default function CalendarioSection({ dipendenti, ferie, giorniChiusura })
       <div className="card-head">
         <div>
           <h2>Calendario</h2>
-          <p className="card-sub">Chi è in ferie, giorno per giorno</p>
+          <p className="card-sub">
+            {aSettimana
+              ? 'Giorno per giorno: chi lavora, chi è in ferie e chi riposa'
+              : 'Chi è in ferie, giorno per giorno'}
+          </p>
         </div>
 
         <div className="testa-calendario">
@@ -157,14 +199,55 @@ export default function CalendarioSection({ dipendenti, ferie, giorniChiusura })
 
                 const inFerie = feriePerGiorno[iso] || [];
                 const chiuso = giorniChiusura.includes(GIORNI[i % 7]);
-                // nella settimana c'è spazio: i nomi si vedono tutti
-                const mostrati = aSettimana ? inFerie : inFerie.slice(0, 3);
+                // nel mese lo spazio è poco: dopo tre nomi si conta e basta
+                const mostrati = inFerie.slice(0, 3);
                 const classi = [
                   'giorno',
                   chiuso ? 'chiuso' : '',
                   iso === isoOggi ? 'oggi' : '',
                   inFerie.length ? 'con-ferie' : ''
                 ].filter(Boolean).join(' ');
+
+                if (aSettimana) {
+                  const gruppi = chiuso ? [] : dettaglioDelGiorno(iso);
+                  return (
+                    <div key={iso} className={classi}>
+                      <div className="giorno-testa">
+                        <span className="giorno-sigla">{SIGLE[i % 7]}</span>
+                        <span className="giorno-numero">{aData(iso).getDate()}</span>
+                        {chiuso && <span className="giorno-chiuso">chiuso</span>}
+                      </div>
+
+                      {chiuso ? (
+                        <p className="giorno-nota">Pizzeria chiusa</p>
+                      ) : gruppi.length === 0 ? (
+                        <p className="giorno-nota">Nessun turno impostato</p>
+                      ) : (
+                        gruppi.map(g => (
+                          <div key={g.chiave} className={`gruppo-turno ${g.classe}`}>
+                            <span className="gruppo-titolo">
+                              <i className="punto" />
+                              {g.titolo}
+                              <span className="gruppo-quanti">{g.persone.length}</span>
+                            </span>
+                            <ul className="giorno-persone">
+                              {g.persone.map(dip => (
+                                <li
+                                  key={dip.id}
+                                  className={`persona-chip rep-${slugReparto(repartoDi(dip))}`}
+                                  title={`${dip.nome} — ${repartoDi(dip)}`}
+                                >
+                                  <Avatar nome={dip.nome} size="sm" />
+                                  <span className="chip-nome">{dip.nome.split(' ')[0]}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  );
+                }
 
                 return (
                   <div key={iso} className={classi}>

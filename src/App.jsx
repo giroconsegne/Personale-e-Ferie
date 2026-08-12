@@ -370,6 +370,7 @@ function App() {
           {caricato && activeSection === 'calendario' && (
             <CalendarioSection
               dipendenti={dipendenti}
+              settimane={settimane}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
             />
