@@ -23,11 +23,14 @@ const conReparto = (elenco) => (elenco || []).map(d => ({ ...d, reparto: reparto
 function App() {
   const [dipendenti, setDipendenti] = useState([]);
   const [turni, setTurni] = useState({});
+  const [settimane, setSettimane] = useState({});
   const [ferie, setFerie] = useState({});
   const [giorniChiusura, setGiorniChiusura] = useState([]);
   const [caricato, setCaricato] = useState(false);
   const [problemaRete, setProblemaRete] = useState(false);
+  const [avviso, setAvviso] = useState('');
   const [nuovoDipendente, setNuovoDipendente] = useState('');
+  const [nuovoTelefono, setNuovoTelefono] = useState('');
   const [nuovoReparto, setNuovoReparto] = useState(REPARTO_PREDEFINITO);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
@@ -42,9 +45,19 @@ function App() {
     ultimoSincronizzato.current = JSON.stringify(dati);
     setDipendenti(conReparto(dati.dipendenti));
     setTurni(dati.turni || {});
+    setSettimane(dati.settimane || {});
     setFerie(dati.ferie || {});
     setGiorniChiusura(dati.giorniChiusura || []);
   };
+
+  // Messaggio passeggero in basso (copia riuscita, turni copiati...)
+  const avvisa = (testo) => setAvviso(testo);
+
+  useEffect(() => {
+    if (!avviso) return;
+    const timer = setTimeout(() => setAvviso(''), 4000);
+    return () => clearTimeout(timer);
+  }, [avviso]);
 
   // Primo caricamento
   useEffect(() => {
@@ -76,7 +89,7 @@ function App() {
   useEffect(() => {
     if (!caricato) return;
 
-    const dati = { dipendenti, turni, ferie, giorniChiusura };
+    const dati = { dipendenti, turni, settimane, ferie, giorniChiusura };
     const serializzato = JSON.stringify(dati);
     if (serializzato === ultimoSincronizzato.current) return;
 
@@ -92,7 +105,7 @@ function App() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [caricato, dipendenti, turni, ferie, giorniChiusura]);
+  }, [caricato, dipendenti, turni, settimane, ferie, giorniChiusura]);
 
   // Esc chiude i pannelli aperti
   useEffect(() => {
@@ -111,7 +124,10 @@ function App() {
     if (!nome) return;
 
     const newId = Date.now().toString();
-    setDipendenti([...dipendenti, { id: newId, nome, reparto: nuovoReparto, giorni_ferie: 20 }]);
+    setDipendenti([
+      ...dipendenti,
+      { id: newId, nome, telefono: nuovoTelefono.trim(), reparto: nuovoReparto, giorni_ferie: 20 }
+    ]);
     setTurni({
       ...turni,
       [newId]: {
@@ -126,6 +142,7 @@ function App() {
     });
     setFerie({ ...ferie, [newId]: [] });
     setNuovoDipendente('');
+    setNuovoTelefono('');
     setShowAddDrawer(false);
   };
 
@@ -135,6 +152,16 @@ function App() {
     const newTurni = { ...turni };
     delete newTurni[id];
     setTurni(newTurni);
+
+    // via anche i turni scritti per le singole settimane
+    const nuoveSettimane = {};
+    Object.entries(settimane).forEach(([lunedi, dellaSettimana]) => {
+      const resto = { ...dellaSettimana };
+      delete resto[id];
+      if (Object.keys(resto).length > 0) nuoveSettimane[lunedi] = resto;
+    });
+    setSettimane(nuoveSettimane);
+
     const newFerie = { ...ferie };
     delete newFerie[id];
     setFerie(newFerie);
@@ -142,6 +169,10 @@ function App() {
 
   const cambiaReparto = (id, reparto) => {
     setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
+  };
+
+  const cambiaTelefono = (id, telefono) => {
+    setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, telefono } : d)));
   };
 
   const toggleGiornoChiusura = (giorno) => {
@@ -162,10 +193,10 @@ function App() {
     .map(g => GIORNI_LABEL[GIORNI.indexOf(g)])
     .filter(Boolean);
 
-  const conteggioReparti = REPARTI.map(r => ({
-    reparto: r,
-    quanti: dipendenti.filter(d => repartoDi(d) === r).length
-  }));
+  // Nel riepilogo del menu compaiono solo le mansioni con qualcuno dentro
+  const conteggioReparti = REPARTI
+    .map(r => ({ reparto: r, quanti: dipendenti.filter(d => repartoDi(d) === r).length }))
+    .filter(r => r.quanti > 0);
 
   return (
     <div className="app">
@@ -228,7 +259,7 @@ function App() {
         </nav>
 
         <div className="sidebar-foot">
-          {dipendenti.length > 0 && (
+          {conteggioReparti.length > 0 && (
             <ul className="riepilogo-reparti">
               {conteggioReparti.map(({ reparto, quanti }) => (
                 <li key={reparto}>
@@ -300,10 +331,13 @@ function App() {
             <TurniSection
               dipendenti={dipendenti}
               turni={turni}
-              setTurni={setTurni}
+              settimane={settimane}
+              setSettimane={setSettimane}
+              ferie={ferie}
               giorni={GIORNI}
               giorniLabel={GIORNI_LABEL}
               giorniChiusura={giorniChiusura}
+              avvisa={avvisa}
             />
           )}
 
@@ -313,6 +347,7 @@ function App() {
               ferie={ferie}
               setFerie={setFerie}
               giorniChiusura={giorniChiusura}
+              avvisa={avvisa}
             />
           )}
 
@@ -328,6 +363,7 @@ function App() {
             <ResocontoSection
               dipendenti={dipendenti}
               turni={turni}
+              settimane={settimane}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
             />
@@ -340,6 +376,7 @@ function App() {
               ferie={ferie}
               eliminaDipendente={eliminaDipendente}
               cambiaReparto={cambiaReparto}
+              cambiaTelefono={cambiaTelefono}
               giorniChiusura={giorniChiusura}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}
@@ -347,6 +384,14 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* ---------- Messaggio passeggero ---------- */}
+      {avviso && (
+        <div className="toast" role="status">
+          <span className="toast-icona" aria-hidden="true">✓</span>
+          {avviso}
+        </div>
+      )}
 
       {/* ---------- Pannello: giorni di chiusura ---------- */}
       {showGiorniDrawer && (
@@ -409,8 +454,17 @@ function App() {
                 autoFocus
               />
 
+              <input
+                className="campo"
+                type="tel"
+                value={nuovoTelefono}
+                onChange={(e) => setNuovoTelefono(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && aggiungiDipendente()}
+                placeholder="Telefono per WhatsApp (facoltativo)"
+              />
+
               <div className="scelta-reparto">
-                <span className="campo-label">Reparto</span>
+                <span className="campo-label">Mansione</span>
                 <div className="segmenti">
                   {REPARTI.map(r => (
                     <button

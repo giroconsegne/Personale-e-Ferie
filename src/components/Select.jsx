@@ -104,7 +104,8 @@ export default function Select({ valore, opzioni, onChange, classe = '', etichet
         aria-expanded={aperto}
         aria-label={etichettaAria}
       >
-        <span className="select-valore">{corrente?.etichetta}</span>
+        {/* "breve" serve alle opzioni che nella casella devono restare discrete */}
+        <span className="select-valore">{corrente?.breve ?? corrente?.etichetta}</span>
         <svg className="select-freccia" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
           <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

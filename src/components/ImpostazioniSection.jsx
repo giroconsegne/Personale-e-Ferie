@@ -8,7 +8,7 @@ import { contaFerie, ferieDellAnno, annoCorrente } from '../date';
 const OPZIONI_REPARTO = REPARTI.map(r => ({
   valore: r,
   etichetta: r,
-  classe: `rep-${slugReparto(r)}`
+  classe: `mansione rep-${slugReparto(r)}`
 }));
 
 export default function ImpostazioniSection({
@@ -17,12 +17,15 @@ export default function ImpostazioniSection({
   ferie,
   eliminaDipendente,
   cambiaReparto,
+  cambiaTelefono,
   giorniChiusura,
   apriAggiungiDipendente,
   apriGiorniChiusura
 }) {
   const [inModifica, setInModifica] = useState(null);
   const [valoreGiorni, setValoreGiorni] = useState('');
+  const [telInModifica, setTelInModifica] = useState(null);
+  const [valoreTelefono, setValoreTelefono] = useState('');
   const [daEliminare, setDaEliminare] = useState(null);
 
   const iniziaModifica = (dip) => {
@@ -36,6 +39,16 @@ export default function ImpostazioniSection({
       setDipendenti(dipendenti.map(d => (d.id === inModifica ? { ...d, giorni_ferie: nuovo } : d)));
     }
     setInModifica(null);
+  };
+
+  const iniziaModificaTelefono = (dip) => {
+    setTelInModifica(dip.id);
+    setValoreTelefono(dip.telefono || '');
+  };
+
+  const salvaTelefono = () => {
+    cambiaTelefono(telInModifica, valoreTelefono.trim());
+    setTelInModifica(null);
   };
 
   const confermaEliminazione = (id) => {
@@ -53,7 +66,7 @@ export default function ImpostazioniSection({
         <div className="card-head">
           <div>
             <h2>Personale</h2>
-            <p className="card-sub">Chi lavora in pizzeria, reparto e ferie spettanti</p>
+            <p className="card-sub">Chi lavora in pizzeria: mansione, telefono e ferie spettanti</p>
           </div>
           <button className="btn btn-primario" onClick={apriAggiungiDipendente}>
             <span>＋</span> Aggiungi dipendente
@@ -72,7 +85,8 @@ export default function ImpostazioniSection({
               <thead>
                 <tr>
                   <th className="col-nome">Dipendente</th>
-                  <th>Reparto</th>
+                  <th>Mansione</th>
+                  <th>Telefono</th>
                   <th>Ferie spettanti</th>
                   <th>Godute nel {annoCorrente()}</th>
                   <th className="col-azioni">Azioni</th>
@@ -100,9 +114,38 @@ export default function ImpostazioniSection({
                           valore={reparto}
                           opzioni={OPZIONI_REPARTO}
                           onChange={(v) => cambiaReparto(dip.id, v)}
-                          classe={`pillola rep-${slugReparto(reparto)}`}
-                          etichettaAria={`Reparto di ${dip.nome}`}
+                          classe={`pillola pillola-mansione rep-${slugReparto(reparto)}`}
+                          etichettaAria={`Mansione di ${dip.nome}`}
                         />
+                      </td>
+
+                      <td>
+                        {telInModifica === dip.id ? (
+                          <div className="edit-giorni">
+                            <input
+                              type="tel"
+                              value={valoreTelefono}
+                              onChange={(e) => setValoreTelefono(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') salvaTelefono();
+                                if (e.key === 'Escape') setTelInModifica(null);
+                              }}
+                              placeholder="333 1234567"
+                              autoFocus
+                            />
+                            <button className="btn btn-ok btn-icona" onClick={salvaTelefono} title="Salva">✓</button>
+                            <button className="btn btn-muto btn-icona" onClick={() => setTelInModifica(null)} title="Annulla">✕</button>
+                          </div>
+                        ) : (
+                          <button
+                            className="valore-modificabile"
+                            onClick={() => iniziaModificaTelefono(dip)}
+                            title="Serve per mandare i turni su WhatsApp"
+                          >
+                            {dip.telefono || <span className="valore-mancante">— aggiungi</span>}
+                            <span className="matita">✎</span>
+                          </button>
+                        )}
                       </td>
 
                       <td>

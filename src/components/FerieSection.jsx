@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
 import DatePicker from './DatePicker';
 import ScrollArea from './ScrollArea';
+import Conferma from './Conferma';
 import { repartoDi, slugReparto } from '../costanti';
 import {
   giorniDelPeriodo,
@@ -12,11 +13,12 @@ import {
   annoCorrente
 } from '../date';
 
-export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura }) {
+export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura, avvisa }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
   const [anno, setAnno] = useState(annoCorrente);
   const [dal, setDal] = useState('');
   const [al, setAl] = useState('');
+  const [chiediConferma, setChiediConferma] = useState(false);
 
   // Il periodo va da "dal" a "al"; se "al" è vuoto vale il solo giorno iniziale
   const fine = al || dal;
@@ -32,16 +34,43 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
 
   const daAggiungere = anteprima.giorni.length - giaPresenti;
 
-  // Aggiunge tutti i giorni del periodo
-  const aggiungiPeriodo = () => {
-    if (!selectedDipendente || !periodoValido) return;
+  const dipSelezionato = dipendenti.find(d => d.id === selectedDipendente);
 
+  /**
+   * Colleghi della stessa mansione già in ferie in quei giorni: due addetti
+   * alla stessa mansione via insieme lasciano scoperto il posto, quindi
+   * l'inserimento va confermato a parte.
+   */
+  const sovrapposizioni = useMemo(() => {
+    if (!dipSelezionato || anteprima.giorni.length === 0) return [];
+    const mansione = repartoDi(dipSelezionato);
+
+    return dipendenti
+      .filter(d => d.id !== dipSelezionato.id && repartoDi(d) === mansione)
+      .map(d => ({
+        dip: d,
+        giorni: anteprima.giorni.filter(g => (ferie[d.id] || []).includes(g))
+      }))
+      .filter(c => c.giorni.length > 0);
+  }, [dipendenti, dipSelezionato, ferie, anteprima.giorni]);
+
+  const inserisci = () => {
     const esistenti = ferie[selectedDipendente] || [];
     const uniti = [...new Set([...esistenti, ...anteprima.giorni])].sort();
 
     setFerie({ ...ferie, [selectedDipendente]: uniti });
     setDal('');
     setAl('');
+  };
+
+  // Aggiunge tutti i giorni del periodo, chiedendo conferma se c'è una sovrapposizione
+  const aggiungiPeriodo = () => {
+    if (!selectedDipendente || !periodoValido) return;
+    if (sovrapposizioni.length > 0) {
+      setChiediConferma(true);
+      return;
+    }
+    inserisci();
   };
 
   // Rimuove un intero periodo
@@ -57,8 +86,6 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
     setDal('');
     setAl('');
   };
-
-  const dipSelezionato = dipendenti.find(d => d.id === selectedDipendente);
 
   // Il monte ferie si azzera ogni anno: si guarda un anno alla volta
   const giorniSelezionato = ferieDellAnno(ferie[selectedDipendente] || [], anno);
@@ -101,7 +128,7 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
               <thead>
                 <tr>
                   <th className="col-nome">Dipendente</th>
-                  <th>Reparto</th>
+                  <th>Mansione</th>
                   <th>Spettanti</th>
                   <th>Godute</th>
                   <th>Residue</th>
@@ -217,6 +244,15 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                 <p className="nota nota-errore">La data finale precede quella iniziale.</p>
               )}
 
+              {sovrapposizioni.length > 0 && (
+                <p className="nota nota-avviso">
+                  ⚠️ Stessa mansione già in ferie in questi giorni:{' '}
+                  {sovrapposizioni
+                    .map(({ dip, giorni }) => `${dip.nome} (${giorni.length} ${giorni.length === 1 ? 'giorno' : 'giorni'})`)
+                    .join(', ')}
+                </p>
+              )}
+
               {periodoValido && (
                 <p className="nota">
                   {daAggiungere > 0
@@ -252,6 +288,37 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
             </div>
           )}
         </>
+      )}
+
+      {chiediConferma && dipSelezionato && (
+        <Conferma
+          titolo="Due persone della stessa mansione in ferie"
+          tono="pericolo"
+          conferma="Sì, inserisci lo stesso"
+          annulla="No, annulla"
+          onAnnulla={() => setChiediConferma(false)}
+          onConferma={() => {
+            inserisci();
+            setChiediConferma(false);
+            avvisa?.(`Ferie inserite nonostante la sovrapposizione in ${repartoDi(dipSelezionato)}`);
+          }}
+        >
+          <p>
+            In questi giorni {dipSelezionato.nome} sarebbe in ferie insieme a chi fa la stessa
+            mansione ({repartoDi(dipSelezionato)}):
+          </p>
+          <ul className="elenco-conflitti">
+            {sovrapposizioni.map(({ dip, giorni }) => (
+              <li key={dip.id}>
+                <strong>{dip.nome}</strong> — {giorni.length} {giorni.length === 1 ? 'giorno' : 'giorni'}{' '}
+                <span className="conflitto-periodi">
+                  ({raggruppaInPeriodi(giorni, giorniChiusura).map(etichettaPeriodo).join('; ')})
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p>Sei sicuro di volerle inserire comunque?</p>
+        </Conferma>
       )}
     </section>
   );

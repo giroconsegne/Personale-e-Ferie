@@ -3,13 +3,14 @@ import Avatar from './Avatar';
 import ScrollArea from './ScrollArea';
 import { repartoDi, slugReparto } from '../costanti';
 import { aIso, conteggiaGiorni } from '../date';
+import { creaLettoreTurni } from '../turni';
 
 const MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ];
 
-export default function ResocontoSection({ dipendenti, turni, ferie, giorniChiusura }) {
+export default function ResocontoSection({ dipendenti, turni, settimane, ferie, giorniChiusura }) {
   const oggi = new Date();
   const isoOggi = aIso(oggi);
   const [vista, setVista] = useState({ anno: oggi.getFullYear(), mese: oggi.getMonth() });
@@ -20,9 +21,12 @@ export default function ResocontoSection({ dipendenti, turni, ferie, giorniChius
     const primoDellAnno = aIso(new Date(vista.anno, 0, 1));
     const ultimoDellAnno = aIso(new Date(vista.anno, 11, 31));
 
+    // ogni giorno va letto dai turni validi in quella settimana
+    const leggiTurno = creaLettoreTurni(settimane, turni);
+
     return dipendenti.map(dip => {
       const comuni = {
-        turniDip: turni[dip.id],
+        turnoDelGiorno: (iso) => leggiTurno(dip.id, iso),
         ferieDip: ferie[dip.id] || [],
         giorniChiusura,
         oggi: isoOggi
@@ -33,7 +37,7 @@ export default function ResocontoSection({ dipendenti, turni, ferie, giorniChius
         anno: conteggiaGiorni({ dal: primoDellAnno, al: ultimoDellAnno, ...comuni })
       };
     });
-  }, [dipendenti, turni, ferie, giorniChiusura, vista, isoOggi]);
+  }, [dipendenti, turni, settimane, ferie, giorniChiusura, vista, isoOggi]);
 
   const totali = useMemo(
     () =>

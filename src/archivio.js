@@ -10,7 +10,7 @@ export const online = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 const client = online ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-export const STATO_VUOTO = { dipendenti: [], turni: {}, ferie: {}, giorniChiusura: [] };
+export const STATO_VUOTO = { dipendenti: [], turni: {}, settimane: {}, ferie: {}, giorniChiusura: [] };
 
 const normalizza = (dati) => ({ ...STATO_VUOTO, ...(dati || {}) });
 

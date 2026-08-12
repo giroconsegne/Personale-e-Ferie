@@ -1,4 +1,4 @@
-import { GIORNI } from './costanti';
+import { GIORNI, TURNO_PREDEFINITO, eLavorativo } from './costanti';
 
 // Le date sono stringhe "AAAA-MM-GG": niente fusi orari di mezzo.
 export const aData = (iso) => new Date(`${iso}T00:00:00`);
@@ -35,6 +35,31 @@ export const ferieDellAnno = (date, anno) =>
 
 export const annoCorrente = () => new Date().getFullYear();
 
+/* ---------- settimane ---------- */
+
+/** Il lunedì della settimana in cui cade la data: è la chiave di ogni settimana. */
+export const lunediDi = (iso) => {
+  const d = aData(iso);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return aIso(d);
+};
+
+export const lunediDiOggi = () => lunediDi(aIso(new Date()));
+
+/** Sposta di N settimane avanti (o indietro, con delta negativo). */
+export const spostaSettimana = (lunedi, delta) => {
+  const d = aData(lunedi);
+  d.setDate(d.getDate() + 7 * delta);
+  return aIso(d);
+};
+
+/** Le sette date della settimana, da lunedì a domenica. */
+export const giorniDellaSettimana = (lunedi) => {
+  const date = [lunedi];
+  for (let i = 1; i < 7; i++) date.push(giornoSuccessivo(date[i - 1]));
+  return date;
+};
+
 /**
  * Espande un periodo in singole date, saltando i giorni di chiusura
  * (in pizzeria chiusa non si consuma un giorno di ferie).
@@ -56,23 +81,22 @@ export function giorniDelPeriodo(dal, al, giorniChiusura) {
 /**
  * Conta i giorni di un intervallo per un singolo dipendente.
  * Un giorno è lavorato se la pizzeria è aperta, la persona non è in ferie
- * e il turno di quel giorno della settimana non è "Riposo".
+ * e quel giorno ha un turno di lavoro (né riposo né "non previsto").
  * "lavorati" considera solo i giorni già trascorsi, "previsti" tutto il periodo.
+ * `turnoDelGiorno(iso)` restituisce il turno valido in quella data settimana.
  */
-export function conteggiaGiorni({ dal, al, turniDip, ferieDip, giorniChiusura, oggi }) {
+export function conteggiaGiorni({ dal, al, turnoDelGiorno, ferieDip, giorniChiusura, oggi }) {
   const conta = { lavorati: 0, previsti: 0, mattine: 0, sere: 0, ferie: 0, riposi: 0, chiusure: 0 };
   let corrente = dal;
 
   for (let i = 0; i <= 400 && corrente <= al; i++) {
-    const chiave = chiaveGiorno(corrente);
-
-    if (giorniChiusura.includes(chiave)) {
+    if (giorniChiusura.includes(chiaveGiorno(corrente))) {
       conta.chiusure++;
     } else if (ferieDip.includes(corrente)) {
       conta.ferie++;
     } else {
-      const turno = turniDip?.[chiave] || 'Riposo';
-      if (turno === 'Riposo') {
+      const turno = turnoDelGiorno(corrente) ?? TURNO_PREDEFINITO;
+      if (!eLavorativo(turno)) {
         conta.riposi++;
       } else {
         conta.previsti++;
@@ -129,3 +153,12 @@ export function etichettaPeriodo({ inizio, fine }) {
 
   return `${stessoAnno ? fmtGiornoCorto.format(a) : fmtGiorno.format(a)} – ${fmtGiorno.format(b)}`;
 }
+
+/** "10 agosto – 16 agosto 2026": intestazione di una settimana di turni. */
+export const etichettaSettimana = (lunedi) =>
+  etichettaPeriodo({ inizio: lunedi, fine: giorniDellaSettimana(lunedi)[6] });
+
+const fmtGiornoBreve = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'numeric' });
+
+/** "10/8": data compatta per i messaggi ai collaboratori. */
+export const dataBreve = (iso) => fmtGiornoBreve.format(aData(iso));

@@ -27,16 +27,7 @@
   --avviso-chiaro: #fdf3e2;
   --pericolo: #d9402f;
 
-  /* reparti */
-  --rep-pizzeria: #c33422;
-  --rep-pizzeria-bg: #fceeeb;
-  --rep-pizzeria-bordo: #f2d5cf;
-  --rep-cucina: #147a51;
-  --rep-cucina-bg: #e7f4ee;
-  --rep-cucina-bordo: #c9e5d8;
-  --rep-sala: #2360a8;
-  --rep-sala-bg: #e9f0f9;
-  --rep-sala-bordo: #cfdff2;
+  /* i colori delle mansioni stanno nelle classi rep-* (sezione MANSIONI) */
 
   /* turni */
   --mattina: #b8690b;
@@ -45,6 +36,8 @@
   --sera-bg: #eeedfb;
   --riposo: #77706a;
   --riposo-bg: #f0edea;
+  --vuoto: #a9a199;
+  --vuoto-bg: #f7f5f3;
 
   /* menu laterale */
   --nav-bg: #1b1815;
@@ -314,11 +307,8 @@ h1, h2, h3 {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  background: var(--rep-punto, var(--nav-testo));
 }
-
-.punto-reparto.rep-pizzeria { background: #ef5a44; }
-.punto-reparto.rep-cucina { background: #35b581; }
-.punto-reparto.rep-sala { background: #5b9cea; }
 
 .riepilogo-nome {
   flex: 1;
@@ -486,6 +476,7 @@ h1, h2, h3 {
 .legenda-voce.turno-mattina .punto { background: var(--mattina); }
 .legenda-voce.turno-sera .punto { background: var(--sera); }
 .legenda-voce.turno-riposo .punto { background: var(--riposo); }
+.legenda-voce.turno-vuoto .punto { background: transparent; border: 1px dashed var(--border-forte); }
 
 /* ============================================================
    AVATAR
@@ -735,33 +726,64 @@ h1, h2, h3 {
   letter-spacing: 0;
 }
 
+/* ============================================================
+   MANSIONI
+   Ogni classe rep-* porta con sé i propri tre colori: chi la usa
+   (pillole, chip, puntini) li applica senza dover elencare le mansioni.
+   ============================================================ */
+.rep-pizzeria {
+  --rep-c: #c33422;
+  --rep-bg: #fceeeb;
+  --rep-bordo: #f2d5cf;
+  --rep-punto: #ef5a44;
+}
+
+.rep-cucina {
+  --rep-c: #147a51;
+  --rep-bg: #e7f4ee;
+  --rep-bordo: #c9e5d8;
+  --rep-punto: #35b581;
+}
+
+.rep-sala {
+  --rep-c: #2360a8;
+  --rep-bg: #e9f0f9;
+  --rep-bordo: #cfdff2;
+  --rep-punto: #5b9cea;
+}
+
+.rep-bar {
+  --rep-c: #8a5510;
+  --rep-bg: #fbf1e2;
+  --rep-bordo: #eeddc2;
+  --rep-punto: #d99326;
+}
+
+.rep-cassa {
+  --rep-c: #6f3a9c;
+  --rep-bg: #f3edfa;
+  --rep-bordo: #e0d3f0;
+  --rep-punto: #9c6ad0;
+}
+
+.rep-lavapiatti {
+  --rep-c: #0e6f79;
+  --rep-bg: #e5f3f4;
+  --rep-bordo: #c6e3e5;
+  --rep-punto: #2ea3ad;
+}
+
 .pill-reparto {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: 1px solid var(--rep-bordo, transparent);
+  background: var(--rep-bg, transparent);
+  color: var(--rep-c, var(--testo-2));
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
-}
-
-.pill-reparto.rep-pizzeria {
-  background: var(--rep-pizzeria-bg);
-  color: var(--rep-pizzeria);
-  border-color: var(--rep-pizzeria-bordo);
-}
-
-.pill-reparto.rep-cucina {
-  background: var(--rep-cucina-bg);
-  color: var(--rep-cucina);
-  border-color: var(--rep-cucina-bordo);
-}
-
-.pill-reparto.rep-sala {
-  background: var(--rep-sala-bg);
-  color: var(--rep-sala);
-  border-color: var(--rep-sala-bordo);
 }
 
 /* giorno chiuso */
@@ -870,22 +892,19 @@ h1, h2, h3 {
   border-color: #e2ddd8;
 }
 
-.pillola.rep-pizzeria {
-  background: var(--rep-pizzeria-bg);
-  color: var(--rep-pizzeria);
-  border-color: var(--rep-pizzeria-bordo);
+/* turno non previsto: la casella deve leggersi come vuota */
+.pillola.turno-vuoto {
+  background: var(--vuoto-bg);
+  color: var(--vuoto);
+  border-color: transparent;
+  border-style: dashed;
+  border-color: var(--border);
 }
 
-.pillola.rep-cucina {
-  background: var(--rep-cucina-bg);
-  color: var(--rep-cucina);
-  border-color: var(--rep-cucina-bordo);
-}
-
-.pillola.rep-sala {
-  background: var(--rep-sala-bg);
-  color: var(--rep-sala);
-  border-color: var(--rep-sala-bordo);
+.pillola-mansione {
+  background: var(--rep-bg);
+  color: var(--rep-c);
+  border-color: var(--rep-bordo);
 }
 
 /* lista delle opzioni (montata sul body) */
@@ -961,9 +980,8 @@ h1, h2, h3 {
 .punto-opzione.turno-mattina { background: var(--mattina); }
 .punto-opzione.turno-sera { background: var(--sera); }
 .punto-opzione.turno-riposo { background: var(--riposo); }
-.punto-opzione.rep-pizzeria { background: var(--rep-pizzeria); }
-.punto-opzione.rep-cucina { background: var(--rep-cucina); }
-.punto-opzione.rep-sala { background: var(--rep-sala); }
+.punto-opzione.turno-vuoto { background: transparent; border: 1px dashed var(--border-forte); }
+.punto-opzione.mansione { background: var(--rep-punto); }
 
 /* barra ferie */
 .meter {
@@ -1209,6 +1227,19 @@ h1, h2, h3 {
 
 .btn-muto:hover {
   background: var(--border);
+}
+
+.btn-fantasma {
+  background: transparent;
+  border-color: transparent;
+  color: var(--testo-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-fantasma:hover {
+  background: var(--surface-3);
+  color: var(--testo);
 }
 
 .btn-fantasma-rosso {
@@ -1572,6 +1603,13 @@ h1, h2, h3 {
   color: var(--pericolo);
 }
 
+.nota-avviso {
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--avviso-chiaro);
+  color: var(--avviso);
+}
+
 .dettaglio-vuoto {
   font-size: 13.5px;
   color: var(--testo-3);
@@ -1867,22 +1905,10 @@ h1, h2, h3 {
   min-width: 0;
 }
 
-.persona-chip.rep-pizzeria {
-  background: var(--rep-pizzeria-bg);
-  color: var(--rep-pizzeria);
-  border-color: var(--rep-pizzeria-bordo);
-}
-
-.persona-chip.rep-cucina {
-  background: var(--rep-cucina-bg);
-  color: var(--rep-cucina);
-  border-color: var(--rep-cucina-bordo);
-}
-
-.persona-chip.rep-sala {
-  background: var(--rep-sala-bg);
-  color: var(--rep-sala);
-  border-color: var(--rep-sala-bordo);
+.persona-chip {
+  background: var(--rep-bg);
+  color: var(--rep-c);
+  border-color: var(--rep-bordo);
 }
 
 .persona-chip.altri {
@@ -2028,10 +2054,10 @@ h1, h2, h3 {
   color: var(--testo-3);
 }
 
-/* scelta del reparto a segmenti */
+/* scelta della mansione a segmenti */
 .segmenti {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 6px;
   padding: 4px;
   border-radius: var(--r-md);
@@ -2055,24 +2081,12 @@ h1, h2, h3 {
   color: var(--testo);
 }
 
+/* da attivo prende i colori della mansione scelta */
 .segmento.attivo {
   background: var(--surface);
   box-shadow: var(--ombra-sm);
-}
-
-.segmento.attivo.rep-pizzeria {
-  color: var(--rep-pizzeria);
-  border-color: var(--rep-pizzeria-bordo);
-}
-
-.segmento.attivo.rep-cucina {
-  color: var(--rep-cucina);
-  border-color: var(--rep-cucina-bordo);
-}
-
-.segmento.attivo.rep-sala {
-  color: var(--rep-sala);
-  border-color: var(--rep-sala-bordo);
+  color: var(--rep-c, var(--testo));
+  border-color: var(--rep-bordo, transparent);
 }
 
 /* scelta dei giorni di chiusura */
@@ -2155,6 +2169,168 @@ h1, h2, h3 {
 @keyframes salidaSu {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+/* ============================================================
+   BARRA DEI TURNI (legenda + azioni della settimana)
+   ============================================================ */
+.barra-turni {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.azioni-turni {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.giorno-data {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--testo-3);
+  letter-spacing: 0;
+}
+
+/* invio dei turni alla singola persona */
+.btn-invia {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  color: var(--testo-3);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.18s ease, color 0.18s ease;
+}
+
+tr:hover .btn-invia,
+.btn-invia:focus-visible {
+  opacity: 1;
+}
+
+.btn-invia:hover {
+  background: var(--brand-chiaro);
+  color: var(--brand);
+}
+
+.segno-ferie {
+  margin-left: 5px;
+  font-size: 11px;
+}
+
+.valore-mancante {
+  color: var(--testo-3);
+  font-weight: 600;
+}
+
+/* ============================================================
+   MESSAGGIO PASSEGGERO
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(92vw, 460px);
+  padding: 12px 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  color: var(--nav-testo-forte);
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: var(--ombra-lg);
+  animation: salidaSu 0.22s ease;
+}
+
+.toast-icona {
+  color: #6fd6a4;
+}
+
+/* ============================================================
+   FINESTRA DI CONFERMA
+   ============================================================ */
+.modale-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(29, 26, 22, 0.5);
+  backdrop-filter: blur(2px);
+  animation: dissolvi 0.18s ease;
+}
+
+.modale {
+  position: fixed;
+  z-index: 401;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 470px);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 22px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--ombra-lg);
+  animation: dissolvi 0.18s ease;
+}
+
+.modale-testa {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 12px;
+}
+
+.modale-testa h2 {
+  font-size: 17.5px;
+  font-weight: 650;
+}
+
+.modale-icona {
+  font-size: 22px;
+}
+
+.modale-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--testo-2);
+}
+
+.modale-azioni {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.elenco-conflitti {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--avviso-chiaro);
+  color: var(--testo);
+  font-size: 13.5px;
+}
+
+.conflitto-periodi {
+  color: var(--testo-2);
 }
 
 /* ============================================================
@@ -2349,4 +2525,136 @@ h1, h2, h3 {
   .segmento { font-size: 12.5px; padding: 9px 4px; }
 
   .drawer { padding: 10px 14px 26px; }
+
+  .barra-turni {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .azioni-turni {
+    width: 100%;
+  }
+
+  .azioni-turni .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12.5px;
+  }
+
+  /* senza il passaggio del mouse il tasto di invio deve restare visibile */
+  .btn-invia { opacity: 1; }
+
+  .modale { padding: 18px; }
+
+  .modale-azioni .btn { flex: 1; }
+}
+
+/* ============================================================
+   STAMPA (e salvataggio in PDF)
+   Sul foglio resta la sola tabella della settimana mostrata.
+   ============================================================ */
+.intestazione-stampa {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+    font-size: 11pt;
+  }
+
+  .sidebar,
+  .sidebar-overlay,
+  .topbar,
+  .card-head,
+  .barra-turni,
+  .toast,
+  .drawer,
+  .drawer-overlay,
+  .modale,
+  .modale-overlay,
+  .btn-invia,
+  .select-freccia,
+  .scroll-area::after,
+  .nota-resoconto {
+    display: none !important;
+  }
+
+  .app { display: block; }
+
+  .main-wrapper { margin-left: 0 !important; }
+
+  .container {
+    max-width: none;
+    padding: 0 !important;
+  }
+
+  .card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .intestazione-stampa {
+    display: block;
+    margin-bottom: 14px;
+  }
+
+  .intestazione-stampa h1 {
+    font-size: 17pt;
+    font-weight: 700;
+  }
+
+  .intestazione-stampa p {
+    margin-top: 2px;
+    font-size: 11pt;
+    color: #444;
+  }
+
+  /* niente scorrimento orizzontale: la tabella sta tutta nel foglio */
+  .scroll-area-inner {
+    overflow: visible !important;
+  }
+
+  .tabella {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .tabella th,
+  .tabella td {
+    padding: 7px 5px;
+    border-color: #ccc;
+  }
+
+  .tabella tr {
+    break-inside: avoid;
+  }
+
+  .tabella-turni .col-nome {
+    width: 19%;
+  }
+
+  /* le tendine diventano testo semplice */
+  .select-trigger {
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    border: none !important;
+    background: transparent !important;
+    font-size: 10.5pt;
+    font-weight: 700;
+  }
+
+  /* i colori di turni e mansioni si vedono anche sul foglio */
+  .pillola,
+  .pill-reparto {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
