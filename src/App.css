@@ -38,6 +38,8 @@
   --riposo-bg: #f0edea;
   --vuoto: #a9a199;
   --vuoto-bg: #f7f5f3;
+  --ferie: #1c7f92;
+  --ferie-bg: #eaf5f7;
 
   /* menu laterale */
   --nav-bg: #1b1815;
@@ -2221,9 +2223,19 @@ tr:hover .btn-invia,
   color: var(--brand);
 }
 
-.segno-ferie {
-  margin-left: 5px;
-  font-size: 11px;
+/* giorno di ferie: al posto della tendina resta scritto "Ferie" */
+.tabella td.in-ferie {
+  background: var(--ferie-bg);
+  text-align: center;
+}
+
+.turno-ferie {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ferie);
 }
 
 .valore-mancante {

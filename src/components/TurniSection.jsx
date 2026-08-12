@@ -311,21 +311,23 @@ export default function TurniSection({
                           const inFerie = sueFerie.includes(dateSettimana[idx]);
                           const valore = turnoDelGiorno(suoiTurni, giorno);
 
+                          // chiusura e ferie non si toccano: niente turno da scegliere
                           return (
-                            <td key={giorno} className={chiuso ? 'chiuso' : ''}>
+                            <td key={giorno} className={chiuso ? 'chiuso' : inFerie ? 'in-ferie' : ''}>
                               {chiuso ? (
                                 <span className="turno-chiuso">—</span>
+                              ) : inFerie ? (
+                                <span className="turno-ferie" title={`${dip.nome} è in ferie`}>
+                                  <span aria-hidden="true">🏖️</span> Ferie
+                                </span>
                               ) : (
-                                <>
-                                  <Select
-                                    valore={valore}
-                                    opzioni={OPZIONI_TURNO}
-                                    onChange={(v) => cambiaTurno(dip.id, giorno, v)}
-                                    classe={`pillola ${classeTurno(valore)}`}
-                                    etichettaAria={`Turno di ${dip.nome}`}
-                                  />
-                                  {inFerie && <span className="segno-ferie" title="In ferie">🏖️</span>}
-                                </>
+                                <Select
+                                  valore={valore}
+                                  opzioni={OPZIONI_TURNO}
+                                  onChange={(v) => cambiaTurno(dip.id, giorno, v)}
+                                  classe={`pillola ${classeTurno(valore)}`}
+                                  etichettaAria={`Turno di ${dip.nome}`}
+                                />
                               )}
                             </td>
                           );
