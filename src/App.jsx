@@ -8,24 +8,27 @@ import ImpostazioniSection from './components/ImpostazioniSection';
 import {
   GIORNI,
   GIORNI_LABEL,
+  LOCALI,
   REPARTI,
   REPARTO_PREDEFINITO,
   repartoDi,
   slugReparto
 } from './costanti';
-import { carica, salva, ascolta, online } from './archivio';
+import { carica, salva, ascolta, online, statoVuoto } from './archivio';
 
 const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
-// I dipendenti salvati prima dei reparti ne ricevono uno predefinito
+// La pizzeria scelta resta su questo dispositivo: ognuno riapre la sua
+const CHIAVE_SCELTA = 'pizzeriaLocaleScelto';
+
+// I dipendenti salvati prima delle mansioni ne ricevono una predefinita
 const conReparto = (elenco) => (elenco || []).map(d => ({ ...d, reparto: repartoDi(d) }));
 
 function App() {
-  const [dipendenti, setDipendenti] = useState([]);
-  const [turni, setTurni] = useState({});
-  const [settimane, setSettimane] = useState({});
-  const [ferie, setFerie] = useState({});
-  const [giorniChiusura, setGiorniChiusura] = useState([]);
+  const [locali, setLocali] = useState(() => statoVuoto().locali);
+  const [idLocale, setIdLocale] = useState(
+    () => localStorage.getItem(CHIAVE_SCELTA) || LOCALI[0].id
+  );
   const [caricato, setCaricato] = useState(false);
   const [problemaRete, setProblemaRete] = useState(false);
   const [avviso, setAvviso] = useState('');
@@ -42,11 +45,28 @@ function App() {
 
   const applica = (dati) => {
     ultimoSincronizzato.current = JSON.stringify(dati);
-    setDipendenti(conReparto(dati.dipendenti));
-    setTurni(dati.turni || {});
-    setSettimane(dati.settimane || {});
-    setFerie(dati.ferie || {});
-    setGiorniChiusura(dati.giorniChiusura || []);
+    setLocali(dati.locali.map(l => ({ ...l, dipendenti: conReparto(l.dipendenti) })));
+  };
+
+  // ---- la pizzeria che si sta guardando ----
+  const indiceLocale = Math.max(0, locali.findIndex(l => l.id === idLocale));
+  const locale = locali[indiceLocale];
+  const { dipendenti, turni, settimane, ferie, giorniChiusura } = locale;
+
+  // Ogni modifica tocca solo la pizzeria aperta
+  const modificaLocale = (campi) =>
+    setLocali(prima => prima.map((l, i) => (i === indiceLocale ? { ...l, ...campi } : l)));
+
+  const setDipendenti = (v) => modificaLocale({ dipendenti: v });
+  const setTurni = (v) => modificaLocale({ turni: v });
+  const setSettimane = (v) => modificaLocale({ settimane: v });
+  const setFerie = (v) => modificaLocale({ ferie: v });
+  const setGiorniChiusura = (v) => modificaLocale({ giorniChiusura: v });
+
+  const cambiaPizzeria = (id) => {
+    setIdLocale(id);
+    localStorage.setItem(CHIAVE_SCELTA, id);
+    if (isMobile()) setSidebarOpen(false);
   };
 
   // Messaggio passeggero in basso (copia riuscita, turni copiati...)
@@ -88,7 +108,7 @@ function App() {
   useEffect(() => {
     if (!caricato) return;
 
-    const dati = { dipendenti, turni, settimane, ferie, giorniChiusura };
+    const dati = { locali };
     const serializzato = JSON.stringify(dati);
     if (serializzato === ultimoSincronizzato.current) return;
 
@@ -104,7 +124,7 @@ function App() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [caricato, dipendenti, turni, settimane, ferie, giorniChiusura]);
+  }, [caricato, locali]);
 
   // Esc chiude i pannelli aperti
   useEffect(() => {
@@ -196,13 +216,28 @@ function App() {
         <div className="sidebar-head">
           <div className="logo">
             <span className="logo-testo">
-              <strong>Pizzeria</strong>
-              <small>Personale e ferie</small>
+              <strong>Personale e ferie</strong>
+              <small>Turni, ferie e resoconti</small>
             </span>
           </div>
           <button className="icon-btn chiudi-menu" onClick={() => setSidebarOpen(false)} title="Chiudi menu">
             ✕
           </button>
+        </div>
+
+        <div className="scelta-locale">
+          <p className="nav-label">Pizzeria</p>
+          {locali.map(l => (
+            <button
+              key={l.id}
+              className={`locale-voce ${l.id === locale.id ? 'attivo' : ''}`}
+              onClick={() => cambiaPizzeria(l.id)}
+              aria-pressed={l.id === locale.id}
+            >
+              <span className="locale-nome">{l.nome}</span>
+              <span className="locale-conta">{l.dipendenti.length}</span>
+            </button>
+          ))}
         </div>
 
         <nav className="sidebar-nav">
@@ -277,7 +312,7 @@ function App() {
           >
             ☰
           </button>
-          <h1 className="topbar-titolo">Gestione Pizzeria</h1>
+          <h1 className="topbar-titolo">{locale.nome}</h1>
           <div className="topbar-chip-area">
             <span
               className={`chip ${problemaRete ? 'chip-avviso' : online ? 'chip-online' : 'chip-locale'}`}
@@ -327,6 +362,7 @@ function App() {
               giorni={GIORNI}
               giorniLabel={GIORNI_LABEL}
               giorniChiusura={giorniChiusura}
+              nomeLocale={locale.nome}
               avvisa={avvisa}
             />
           )}

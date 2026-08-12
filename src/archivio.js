@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
+import { LOCALI } from './costanti';
 
 const CHIAVE_LOCALE = 'pizzeriaApp';
 const TABELLA = 'stato';
@@ -10,15 +11,54 @@ export const online = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 const client = online ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-export const STATO_VUOTO = { dipendenti: [], turni: {}, settimane: {}, ferie: {}, giorniChiusura: [] };
+/** Una pizzeria appena aperta: nome, e tutto il resto vuoto. */
+const localeVuoto = ({ id, nome }) => ({
+  id,
+  nome,
+  dipendenti: [],
+  turni: {},
+  settimane: {},
+  ferie: {},
+  giorniChiusura: []
+});
 
-const normalizza = (dati) => ({ ...STATO_VUOTO, ...(dati || {}) });
+export const statoVuoto = () => ({ locali: LOCALI.map(localeVuoto) });
+
+/**
+ * Riporta i dati letti alla forma attesa, qualunque cosa ci sia salvato.
+ * I dati di prima della divisione in due pizzerie (personale e turni tutti
+ * insieme) finiscono nella prima, così non si perde niente.
+ */
+const normalizza = (dati) => {
+  if (!dati) return statoVuoto();
+
+  if (Array.isArray(dati.locali)) {
+    return {
+      locali: LOCALI.map((base, i) => ({ ...localeVuoto(base), ...(dati.locali[i] || {}), id: base.id }))
+    };
+  }
+
+  const stato = statoVuoto();
+  stato.locali[0] = {
+    ...stato.locali[0],
+    dipendenti: dati.dipendenti || [],
+    turni: dati.turni || {},
+    settimane: dati.settimane || {},
+    ferie: dati.ferie || {},
+    giorniChiusura: dati.giorniChiusura || []
+  };
+  return stato;
+};
+
+/** Quante persone ci sono in tutto, nelle due pizzerie messe insieme. */
+const quantiDipendenti = (stato) =>
+  stato.locali.reduce((somma, l) => somma + (l.dipendenti || []).length, 0);
 
 const leggiLocale = () => {
   try {
     return normalizza(JSON.parse(localStorage.getItem(CHIAVE_LOCALE)));
   } catch {
-    return { ...STATO_VUOTO };
+    return statoVuoto();
   }
 };
 
@@ -48,9 +88,9 @@ export async function carica() {
   if (error) throw error;
 
   const remoto = data?.dati;
-  const remotoVuoto = !remoto || (remoto.dipendenti || []).length === 0;
+  const remotoVuoto = !remoto || quantiDipendenti(normalizza(remoto)) === 0;
 
-  if (remotoVuoto && locale.dipendenti.length > 0) {
+  if (remotoVuoto && quantiDipendenti(locale) > 0) {
     await salva(locale);
     return locale;
   }

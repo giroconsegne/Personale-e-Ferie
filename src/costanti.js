@@ -4,6 +4,16 @@ export const GIORNI_LABEL = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'V
 
 export const GIORNI_SIGLA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
+/**
+ * Le due pizzerie. Ognuna ha il suo personale, i suoi turni, le sue ferie
+ * e i suoi giorni di chiusura: nell'app si passa dall'una all'altra dal menu.
+ * L'ordine conta: i dati salvati prima di questa divisione finiscono nella prima.
+ */
+export const LOCALI = [
+  { id: 'dauria', nome: "Fratelli D'Auria" },
+  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella' }
+];
+
 // Le mansioni sono salvate nel campo "reparto" dei dipendenti: il nome della
 // chiave resta quello di prima per non perdere i dati già inseriti.
 export const REPARTI = ['Pizzeria', 'Cucina', 'Sala', 'Bar', 'Cassa', 'Lavapiatti'];

@@ -38,6 +38,7 @@ export default function TurniSection({
   giorni,
   giorniLabel,
   giorniChiusura,
+  nomeLocale,
   avvisa
 }) {
   const [lunedi, setLunedi] = useState(lunediDiOggi);
@@ -188,8 +189,8 @@ export default function TurniSection({
 
       {/* Intestazione che compare solo sul foglio stampato */}
       <div className="intestazione-stampa">
-        <h1>Turni settimanali</h1>
-        <p>Settimana {etichettaSettimana(lunedi)}</p>
+        <h1>{nomeLocale}</h1>
+        <p>Turni della settimana {etichettaSettimana(lunedi)}</p>
       </div>
 
       {dipendenti.length === 0 ? (
