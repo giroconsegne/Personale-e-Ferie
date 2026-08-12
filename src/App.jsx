@@ -204,7 +204,6 @@ function App() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-head">
           <div className="logo">
-            <span className="logo-mark">🍕</span>
             <span className="logo-testo">
               <strong>Pizzeria</strong>
               <small>Personale e ferie</small>
