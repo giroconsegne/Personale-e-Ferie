@@ -8,6 +8,7 @@ import {
   REPARTI,
   TURNI,
   classeTurno,
+  eLavorativo,
   etichettaTurno,
   repartoDi,
   slugReparto
@@ -59,6 +60,7 @@ export default function TurniSection({
   const [lunedi, setLunedi] = useState(lunediDiOggi);
   const [daSovrascrivere, setDaSovrascrivere] = useState(null);
   const [daRipristinare, setDaRipristinare] = useState(false);
+  const [daConfermare, setDaConfermare] = useState(null);
 
   const dateSettimana = giorniDellaSettimana(lunedi);
   const propria = settimanaPropria(settimane, lunedi);
@@ -67,7 +69,7 @@ export default function TurniSection({
   // I turni effettivi della settimana mostrata, persona per persona
   const turniDi = (dipId) => turniDellaSettimana(settimane, turni, dipId, lunedi);
 
-  const cambiaTurno = (dipId, giorno, valore) => {
+  const applicaTurno = (dipId, giorno, valore) => {
     setSettimane({
       ...settimane,
       [lunedi]: {
@@ -77,6 +79,39 @@ export default function TurniSection({
         [dipId]: { ...turniDi(dipId), [giorno]: valore }
       }
     });
+  };
+
+  /** Chi altro, nella stessa mansione, quel giorno non lavora. */
+  const altriFermi = (dipId, giorno) => {
+    const dip = dipendenti.find(d => d.id === dipId);
+    if (!dip) return [];
+
+    const data = dateSettimana[giorni.indexOf(giorno)];
+    const mansione = repartoDi(dip);
+
+    return dipendenti
+      .filter(d => d.id !== dipId && repartoDi(d) === mansione)
+      .map(d => {
+        if ((ferie[d.id] || []).includes(data)) return { dip: d, motivo: 'in ferie' };
+        const turno = turnoDelGiorno(turniDi(d.id), giorno);
+        if (turno === 'Riposo') return { dip: d, motivo: 'a riposo' };
+        if (!eLavorativo(turno)) return { dip: d, motivo: 'senza turno' };
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  // Mettere a riposo qualcuno quando un collega della stessa mansione
+  // è già fermo lascia scoperto il posto: va confermato a parte.
+  const cambiaTurno = (dipId, giorno, valore) => {
+    if (!eLavorativo(valore)) {
+      const fermi = altriFermi(dipId, giorno);
+      if (fermi.length > 0) {
+        setDaConfermare({ dipId, giorno, valore, fermi });
+        return;
+      }
+    }
+    applicaTurno(dipId, giorno, valore);
   };
 
   const scriviSettimana = (destinazione) => {
@@ -304,6 +339,39 @@ export default function TurniSection({
           </ScrollArea>
         </>
       )}
+
+      {daConfermare && (() => {
+        const dip = dipendenti.find(d => d.id === daConfermare.dipId);
+        const idx = giorni.indexOf(daConfermare.giorno);
+        const parola = daConfermare.valore === 'Riposo' ? 'a riposo' : 'senza turno';
+
+        return (
+          <Conferma
+            titolo={`Due persone della stessa mansione ${parola}`}
+            tono="pericolo"
+            conferma="Sì, mettilo lo stesso"
+            annulla="No, annulla"
+            onAnnulla={() => setDaConfermare(null)}
+            onConferma={() => {
+              applicaTurno(daConfermare.dipId, daConfermare.giorno, daConfermare.valore);
+              setDaConfermare(null);
+            }}
+          >
+            <p>
+              {giorniLabel[idx]} {dataBreve(dateSettimana[idx])} {dip?.nome} resterebbe {parola}
+              {' '}insieme a chi fa la stessa mansione ({repartoDi(dip)}):
+            </p>
+            <ul className="elenco-conflitti">
+              {daConfermare.fermi.map(({ dip: collega, motivo }) => (
+                <li key={collega.id}>
+                  <strong>{collega.nome}</strong> — {motivo}
+                </li>
+              ))}
+            </ul>
+            <p>Sei sicuro?</p>
+          </Conferma>
+        );
+      })()}
 
       {daRipristinare && (
         <Conferma
