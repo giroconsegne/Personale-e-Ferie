@@ -2602,7 +2602,7 @@ tr:hover .btn-invia,
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 15mm;
   }
 
   body {
@@ -2631,9 +2631,11 @@ tr:hover .btn-invia,
 
   .main-wrapper { margin-left: 0 !important; }
 
+  /* un filo di aria in più: tiene il foglio staccato dal bordo anche
+     quando nella finestra di stampa si sceglie "margini: nessuno" */
   .container {
     max-width: none;
-    padding: 0 !important;
+    padding: 4mm !important;
   }
 
   .card {
