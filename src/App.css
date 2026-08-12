@@ -2465,6 +2465,9 @@ tr:hover .btn-invia,
   display: flex;
   align-items: center;
   gap: 9px;
+  /* ancorato a metà schermo: senza width la larghezza disponibile
+     sarebbe solo la metà destra e il testo andrebbe a capo tre volte */
+  width: max-content;
   max-width: min(92vw, 460px);
   padding: 12px 18px;
   transform: translateX(-50%);
@@ -2632,10 +2635,31 @@ tr:hover .btn-invia,
 
   /* la colonna dei nomi resta stretta per lasciare spazio ai turni */
   .col-nome {
-    max-width: 132px;
+    max-width: 150px;
   }
 
   .persona { gap: 8px; }
+
+  /* i nomi lunghi vanno a capo invece di essere troncati: su schermo
+     stretto "Domenico Barbatano" diventerebbe altrimenti "Dom…" */
+  .tabella .persona-nome {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
+  }
+
+  /* nella tabella dei turni lo spazio è prezioso: via il tondino,
+     e alla colonna dei nomi un minimo garantito */
+  .tabella-turni .avatar { display: none; }
+
+  .tabella-turni .col-nome { min-width: 140px; }
+
+  .tabella-turni .btn-invia {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
 
   .avatar-md {
     width: 27px;
