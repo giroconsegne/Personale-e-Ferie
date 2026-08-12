@@ -2207,6 +2207,34 @@ h1, h2, h3 {
   to { transform: translateY(0); }
 }
 
+/* intestazione del calendario: scelta della vista + navigazione */
+.testa-calendario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.segmenti-vista {
+  grid-template-columns: repeat(2, 1fr);
+  padding: 3px;
+}
+
+.segmenti-vista .segmento {
+  padding: 6px 14px;
+  font-size: 12.5px;
+}
+
+.segmenti-vista .segmento.attivo {
+  color: var(--brand);
+  border-color: var(--brand-chiaro);
+}
+
+/* vista a settimana: una riga sola, quindi celle più alte e nomi tutti visibili */
+.calendario.a-settimana .giorno {
+  min-height: 148px;
+}
+
 /* ============================================================
    ORARI DI APERTURA
    ============================================================ */
