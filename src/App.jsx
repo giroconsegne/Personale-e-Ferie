@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './App.css';
 import TurniSection from './components/TurniSection';
 import FerieSection from './components/FerieSection';
 import CalendarioSection from './components/CalendarioSection';
 import ResocontoSection from './components/ResocontoSection';
 import ImpostazioniSection from './components/ImpostazioniSection';
+import MinimiDrawer from './components/MinimiDrawer';
+import Conferma from './components/Conferma';
 import {
   APERTURE,
   GIORNI,
@@ -23,6 +25,10 @@ import {
 import { carica, salva, ascolta, online, statoVuoto } from './archivio';
 
 const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+// Un vuoto sempre uguale a se stesso: usarlo come ripiego evita di
+// creare un oggetto nuovo a ogni render, che farebbe ricalcolare tutto
+const NIENTE = {};
 
 // La pizzeria scelta resta su questo dispositivo: ognuno riapre la sua
 const CHIAVE_SCELTA = 'pizzeriaLocaleScelto';
@@ -44,6 +50,10 @@ function App() {
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [showMansioneDrawer, setShowMansioneDrawer] = useState(false);
   const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
+  const [showMinimiDrawer, setShowMinimiDrawer] = useState(false);
+  // ammanchi della settimana aperta in Turni, riferiti dalla sezione stessa
+  const [ammanchi, setAmmanchi] = useState([]);
+  const [sezioneDaAprire, setSezioneDaAprire] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const [activeSection, setActiveSection] = useState('turni');
 
@@ -60,15 +70,19 @@ function App() {
   const indiceLocale = Math.max(0, locali.findIndex(l => l.id === idLocale));
   const locale = locali[indiceLocale];
   const { dipendenti, settimane, ferie, aperture } = locale;
-  const mansioniSettimane = locale.mansioniSettimane || {};
+  const mansioniSettimane = locale.mansioniSettimane || NIENTE;
+  const minimi = locale.minimi || NIENTE;
 
   // Le mansioni di questa pizzeria: quelle di partenza che non sono state
   // tolte, più quelle aggiunte a mano
   const mansioniTolte = locale.mansioniTolte || [];
-  const mansioni = [
-    ...REPARTI.filter(r => !mansioniTolte.includes(r)),
-    ...(locale.mansioni || [])
-  ];
+  const mansioni = useMemo(
+    () => [
+      ...REPARTI.filter(r => !(locale.mansioniTolte || []).includes(r)),
+      ...(locale.mansioni || [])
+    ],
+    [locale.mansioniTolte, locale.mansioni]
+  );
 
   const quantiNellaMansione = (nome) => dipendenti.filter(d => repartoDi(d) === nome).length;
 
@@ -153,6 +167,7 @@ function App() {
       if (e.key !== 'Escape') return;
       setShowAddDrawer(false);
       setShowGiorniDrawer(false);
+      setShowMinimiDrawer(false);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -245,10 +260,29 @@ function App() {
     modificaLocale({ aperture: { ...aperture, [giorno]: valore } });
   };
 
+  const cambiaMinimo = (mansione, giorno, valore) => {
+    const quanti = Math.max(0, Math.min(99, parseInt(valore, 10) || 0));
+    modificaLocale({
+      minimi: { ...minimi, [mansione]: { ...(minimi[mansione] || {}), [giorno]: quanti } }
+    });
+  };
+
   // Su mobile il menu si richiude dopo la scelta
-  const vaiA = (sezione) => {
+  const apriSezione = (sezione) => {
     setActiveSection(sezione);
     if (isMobile()) setSidebarOpen(false);
+  };
+
+  /**
+   * Lasciando i turni con la settimana sotto il personale minimo si
+   * chiede conferma: è l'ultimo momento utile per accorgersene.
+   */
+  const vaiA = (sezione) => {
+    if (activeSection === 'turni' && sezione !== 'turni' && ammanchi.length > 0) {
+      setSezioneDaAprire(sezione);
+      return;
+    }
+    apriSezione(sezione);
   };
 
   const labelDiChiusura = giorniChiusura
@@ -324,6 +358,11 @@ function App() {
           </button>
 
           <div className="nav-divisore" />
+
+          <button className="nav-item" onClick={() => setShowMinimiDrawer(true)}>
+            <span className="nav-icon">🔢</span>
+            <span className="nav-text">Personale minimo</span>
+          </button>
 
           <button
             className={`nav-item ${activeSection === 'impostazioni' ? 'active' : ''}`}
@@ -416,6 +455,8 @@ function App() {
               giorniChiusura={giorniChiusura}
               aperture={aperture}
               mansioni={mansioni}
+              minimi={minimi}
+              onAmmanchi={setAmmanchi}
               nomeLocale={locale.nome}
               turniDisponibili={turniDelLocale(locale.id)}
               avvisa={avvisa}
@@ -467,6 +508,44 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* ---------- Pannello: personale minimo ---------- */}
+      {showMinimiDrawer && (
+        <MinimiDrawer
+          mansioni={mansioni}
+          minimi={minimi}
+          aperture={aperture}
+          quantiNellaMansione={quantiNellaMansione}
+          cambiaMinimo={cambiaMinimo}
+          chiudi={() => setShowMinimiDrawer(false)}
+        />
+      )}
+
+      {/* ---------- Avviso: settimana sotto il personale minimo ---------- */}
+      {sezioneDaAprire && (
+        <Conferma
+          titolo="Non arrivi al personale minimo"
+          tono="pericolo"
+          conferma="Esci lo stesso"
+          annulla="Resto sui turni"
+          onAnnulla={() => setSezioneDaAprire(null)}
+          onConferma={() => {
+            apriSezione(sezioneDaAprire);
+            setSezioneDaAprire(null);
+          }}
+        >
+          <p>Nella settimana che stai guardando mancano delle persone:</p>
+          <ul className="elenco-conflitti">
+            {ammanchi.map(a => (
+              <li key={`${a.giorno}-${a.mansione}`}>
+                <strong>{GIORNI_LABEL[a.indice]}</strong> — {a.mansione}:{' '}
+                {a.presenti} {a.presenti === 1 ? 'persona' : 'persone'} su {a.richiesti}
+              </li>
+            ))}
+          </ul>
+          <p>Vuoi tornare ai turni per sistemare, o uscire comunque?</p>
+        </Conferma>
+      )}
 
       {/* ---------- Messaggio passeggero ---------- */}
       {avviso && (

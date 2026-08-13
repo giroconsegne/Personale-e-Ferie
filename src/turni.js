@@ -1,4 +1,4 @@
-import { TURNO_PREDEFINITO } from './costanti';
+import { GIORNI, TURNO_PREDEFINITO, eChiusoIlGiorno, eLavorativo, repartoDi } from './costanti';
 import { chiaveGiorno, lunediDi } from './date';
 
 /**
@@ -54,4 +54,69 @@ export function creaLettoreMansioni(mansioniSettimane) {
       chiaveGiorno(iso),
       predefinita
     );
+}
+
+/* ---------- personale minimo ---------- */
+
+/**
+ * Quante persone servono in una mansione in un certo giorno della
+ * settimana. Zero (o niente) vuol dire che non è stato chiesto un minimo.
+ */
+export const minimoDi = (minimi, mansione, giorno) => {
+  const quanti = minimi?.[mansione]?.[giorno];
+  return Number.isFinite(quanti) && quanti > 0 ? quanti : 0;
+};
+
+/** Chi lavora davvero in quella mansione, in quel giorno della settimana. */
+export function chiLavora({ dipendenti, settimane, mansioniSettimane, ferie, lunedi, giorno, data, mansione }) {
+  return dipendenti.filter(dip => {
+    if ((ferie?.[dip.id] || []).includes(data)) return false;
+    if (!eLavorativo(turnoDelGiorno(turniDellaSettimana(settimane, dip.id, lunedi), giorno))) return false;
+
+    const sua = mansioneDelGiorno(
+      mansioniDellaSettimana(mansioniSettimane, dip.id, lunedi),
+      giorno,
+      repartoDi(dip)
+    );
+    return sua === mansione;
+  });
+}
+
+/**
+ * Dove la settimana mostrata non arriva al personale minimo.
+ * Un giorno chiuso non conta: non c'è nessun turno da coprire.
+ * Restituisce una riga per ogni mansione scoperta, in ordine di giorno.
+ */
+export function ammanchiDellaSettimana({
+  dipendenti,
+  settimane,
+  mansioniSettimane,
+  ferie,
+  aperture,
+  minimi,
+  mansioni,
+  lunedi,
+  dateSettimana
+}) {
+  const ammanchi = [];
+
+  GIORNI.forEach((giorno, i) => {
+    if (eChiusoIlGiorno(aperture, giorno)) return;
+
+    mansioni.forEach(mansione => {
+      const richiesti = minimoDi(minimi, mansione, giorno);
+      if (richiesti === 0) return;
+
+      const presenti = chiLavora({
+        dipendenti, settimane, mansioniSettimane, ferie,
+        lunedi, giorno, data: dateSettimana[i], mansione
+      }).length;
+
+      if (presenti < richiesti) {
+        ammanchi.push({ giorno, indice: i, data: dateSettimana[i], mansione, richiesti, presenti });
+      }
+    });
+  });
+
+  return ammanchi;
 }

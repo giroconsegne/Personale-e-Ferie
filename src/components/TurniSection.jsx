@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Avatar from './Avatar';
 import Select from './Select';
 import ScrollArea from './ScrollArea';
@@ -29,6 +29,7 @@ import {
   spostaSettimana
 } from '../date';
 import {
+  ammanchiDellaSettimana,
   mansioneDelGiorno,
   mansioniDellaSettimana,
   settimanaPropria,
@@ -58,6 +59,8 @@ export default function TurniSection({
   giorniChiusura,
   aperture,
   mansioni,
+  minimi,
+  onAmmanchi,
   nomeLocale,
   turniDisponibili,
   avvisa
@@ -88,7 +91,8 @@ export default function TurniSection({
   const [scegliStampa, setScegliStampa] = useState(false);
   const [stampa, setStampa] = useState(null);
 
-  const dateSettimana = giorniDellaSettimana(lunedi);
+  // memorizzata: entra nel calcolo degli ammanchi, che non deve rifarsi a ogni render
+  const dateSettimana = useMemo(() => giorniDellaSettimana(lunedi), [lunedi]);
   const propria = settimanaPropria(settimane, lunedi);
   const settimanaDiOggi = lunedi === lunediDiOggi();
 
@@ -124,6 +128,25 @@ export default function TurniSection({
       }
     });
   };
+
+  /* ---------- personale minimo ---------- */
+
+  // Dove la settimana mostrata non arriva ai minimi chiesti
+  const ammanchi = useMemo(
+    () => ammanchiDellaSettimana({
+      dipendenti, settimane, mansioniSettimane, ferie, aperture,
+      minimi, mansioni, lunedi, dateSettimana
+    }),
+    [dipendenti, settimane, mansioniSettimane, ferie, aperture, minimi, mansioni, lunedi, dateSettimana]
+  );
+
+  // App li usa per avvisare quando si cambia pagina
+  useEffect(() => { onAmmanchi?.(ammanchi); }, [ammanchi, onAmmanchi]);
+
+  // Quando si lascia i turni l'avviso non ha più senso
+  useEffect(() => () => onAmmanchi?.([]), [onAmmanchi]);
+
+  const ammanchiDelGiorno = (indice) => ammanchi.filter(a => a.indice === indice);
 
   /** Chi altro, nella stessa mansione di quel giorno, quel giorno non lavora. */
   const altriFermi = (dipId, giorno) => {
@@ -354,6 +377,15 @@ export default function TurniSection({
             </div>
           </div>
 
+          {ammanchi.length > 0 && (
+            <p className="nota nota-avviso striscia-ammanchi">
+              ⚠️ Sotto il personale minimo:{' '}
+              {ammanchi
+                .map(a => `${giorniLabel[a.indice]} ${a.mansione} ${a.presenti}/${a.richiesti}`)
+                .join(' · ')}
+            </p>
+          )}
+
           <ScrollArea>
             <table className="tabella tabella-turni">
               <thead>
@@ -365,13 +397,23 @@ export default function TurniSection({
                     // "pranzo e cena" è la normalità: si segnala solo il resto
                     const daSegnalare = apertura !== 'entrambi';
 
+                    const scoperti = ammanchiDelGiorno(idx);
+
                     return (
-                      <th key={giorni[idx]} className={chiuso ? 'chiuso' : ''}>
+                      <th key={giorni[idx]} className={`${chiuso ? 'chiuso' : ''} ${scoperti.length ? 'sotto-minimo' : ''}`}>
                         <span className="giorno-nome">{label}</span>
                         <span className="giorno-data">{dataBreve(dateSettimana[idx])}</span>
                         {daSegnalare && (
                           <span className={`badge-chiuso ${chiuso ? '' : 'badge-orario'}`}>
                             {APERTURE.find(a => a.valore === apertura)?.breve}
+                          </span>
+                        )}
+                        {scoperti.length > 0 && (
+                          <span
+                            className="badge-chiuso badge-minimo"
+                            title={scoperti.map(a => `${a.mansione}: ${a.presenti} su ${a.richiesti}`).join('\n')}
+                          >
+                            ⚠️ Manca gente
                           </span>
                         )}
                       </th>

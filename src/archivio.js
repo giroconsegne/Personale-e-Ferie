@@ -21,6 +21,8 @@ const localeVuoto = ({ id, nome }) => ({
   mansioniSettimane: {},
   ferie: {},
   aperture: {},
+  // quante persone servono come minimo, per mansione e giorno della settimana
+  minimi: {},
   // le mansioni aggiunte a mano: quelle di partenza stanno in costanti.js
   mansioni: [],
   // e quelle di partenza che questa pizzeria ha tolto
