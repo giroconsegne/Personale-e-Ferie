@@ -1,0 +1,17 @@
+{
+  "name": "Fratelli D'Auria",
+  "short_name": "D'Auria",
+  "description": "Turni e ferie di Fratelli D'Auria",
+  "lang": "it",
+  "start_url": "/?pizzeria=dauria",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f3ef",
+  "theme_color": "#1b1815",
+  "icons": [
+    { "src": "/icona-dauria-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icona-dauria-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icona-dauria-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

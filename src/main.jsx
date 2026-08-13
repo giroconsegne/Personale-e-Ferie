@@ -8,3 +8,13 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// L'app diventa installabile sul telefono. In sviluppo no: un service
+// worker che resta in giro confonde le prove.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(e => {
+      console.error('Service worker non registrato', e);
+    });
+  });
+}

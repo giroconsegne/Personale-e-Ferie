@@ -33,13 +33,21 @@ const NIENTE = {};
 // La pizzeria scelta resta su questo dispositivo: ognuno riapre la sua
 const CHIAVE_SCELTA = 'pizzeriaLocaleScelto';
 
+/**
+ * Aperta con ?pizzeria=<id> l'app resta su quella e basta: la scelta
+ * fra le due sparisce dal menu. È così che funziona l'app installata
+ * sul telefono, che punta a una pizzeria sola.
+ */
+const localeRichiesto = new URLSearchParams(window.location.search).get('pizzeria');
+const LOCALE_FISSO = LOCALI.some(l => l.id === localeRichiesto) ? localeRichiesto : null;
+
 // I dipendenti salvati prima delle mansioni ne ricevono una predefinita
 const conReparto = (elenco) => (elenco || []).map(d => ({ ...d, reparto: repartoDi(d) }));
 
 function App() {
   const [locali, setLocali] = useState(() => statoVuoto().locali);
   const [idLocale, setIdLocale] = useState(
-    () => localStorage.getItem(CHIAVE_SCELTA) || LOCALI[0].id
+    () => LOCALE_FISSO || localStorage.getItem(CHIAVE_SCELTA) || LOCALI[0].id
   );
   const [caricato, setCaricato] = useState(false);
   const [problemaRete, setProblemaRete] = useState(false);
@@ -310,9 +318,10 @@ function App() {
           </button>
         </div>
 
-        <div className="scelta-locale">
+        {/* con una pizzeria fissa non c'è niente da scegliere */}
+        <div className={`scelta-locale ${LOCALE_FISSO ? 'sola-pizzeria' : ''}`}>
           <p className="nav-label">Pizzeria</p>
-          {locali.map(l => (
+          {(LOCALE_FISSO ? locali.filter(l => l.id === LOCALE_FISSO) : locali).map(l => (
             <button
               key={l.id}
               className={`locale-voce ${l.id === locale.id ? 'attivo' : ''}`}

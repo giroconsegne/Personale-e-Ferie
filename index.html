@@ -1,10 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pizzeria-app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1b1815" />
+    <meta name="description" content="Turni, ferie e resoconti del personale" />
+
+    <!-- App installabile: il manifesto di partenza vale per tutte le pizzerie -->
+    <link rel="manifest" href="/manifest.webmanifest" id="manifesto" />
+    <link rel="apple-touch-icon" href="/icona-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Personale e ferie" />
+
+    <title>Personale e ferie</title>
+
+    <script>
+      // Aperta con ?pizzeria=<id>, l'app da installare è quella di
+      // quella sola pizzeria: si scambia il manifesto prima che il
+      // browser proponga l'installazione.
+      (function () {
+        var id = new URLSearchParams(location.search).get('pizzeria');
+        if (!id || !/^[a-z]+$/.test(id)) return;
+        var link = document.getElementById('manifesto');
+        if (link) link.href = '/manifest-' + id + '.webmanifest';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
