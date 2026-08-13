@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.netlify.personale_ferie.pomodoro",
+      "sha256_cert_fingerprints": [
+        "C1:09:E0:36:D8:92:D5:69:E4:86:80:58:DA:F3:0E:13:FD:2E:99:6D:CE:7A:4B:EF:17:9A:2F:70:89:49:E0:70"
+      ]
+    }
+  }
+]
