@@ -73,7 +73,7 @@ export default function CalendarioSection({ dipendenti, settimane, ferie, giorni
   const celle = aSettimana ? giorniDellaSettimana(lunedi) : celleMese;
 
   /**
-   * Il dettaglio di una giornata: chi lavora di mattina, chi di sera,
+   * Il dettaglio di una giornata: chi lavora a pranzo, chi a cena,
    * chi è in ferie e chi riposa. Serve solo alla vista a settimana.
    */
   const dettaglioDelGiorno = useMemo(() => {

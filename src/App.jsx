@@ -421,8 +421,9 @@ function App() {
                 <button className="icon-btn" onClick={() => setShowGiorniDrawer(false)} title="Chiudi">✕</button>
               </div>
               <p className="drawer-sub">
-                Giorno per giorno: a pranzo si lavora di mattina, a cena di sera.
-                Nei giorni chiusi i turni sono disattivati e le ferie non vengono conteggiate.
+                Giorno per giorno: dove è aperto solo a pranzo (o solo a cena) l'altro turno
+                non si può scegliere. Nei giorni chiusi i turni sono disattivati e le ferie
+                non vengono conteggiate.
               </p>
 
               <div className="elenco-aperture">

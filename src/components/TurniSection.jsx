@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Avatar from './Avatar';
 import Select from './Select';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
+import ScegliStampa from './ScegliStampa';
+import TabellaStampa from './TabellaStampa';
 import {
   APERTURE,
   GIORNI_SIGLA,
@@ -18,9 +20,11 @@ import {
 } from '../costanti';
 import {
   dataBreve,
+  etichettaMese,
   etichettaSettimana,
   giorniDellaSettimana,
   lunediDiOggi,
+  settimaneDelMese,
   spostaSettimana
 } from '../date';
 import { settimanaPropria, turniDellaSettimana, turnoDelGiorno } from '../turni';
@@ -50,8 +54,8 @@ export default function TurniSection({
 }) {
   /**
    * I turni scegliibili in un certo giorno: quelli previsti in questa
-   * pizzeria, ristretti all'orario di apertura (a pranzo solo mattina,
-   * a cena solo sera), più riposo e "non previsto".
+   * pizzeria, ristretti all'orario di apertura (nei giorni di sola cena
+   * il pranzo non si può scegliere), più riposo e "non previsto".
    */
   const opzioniDelGiorno = (giorno) => [
     ...turniDelGiorno(turniDisponibili, aperture, giorno)
@@ -62,6 +66,9 @@ export default function TurniSection({
   const [lunedi, setLunedi] = useState(lunediDiOggi);
   const [daSovrascrivere, setDaSovrascrivere] = useState(null);
   const [daConfermare, setDaConfermare] = useState(null);
+  // null = niente stampa in corso; 'settimana' o 'mese' = cosa mandare sul foglio
+  const [scegliStampa, setScegliStampa] = useState(false);
+  const [stampa, setStampa] = useState(null);
 
   const dateSettimana = giorniDellaSettimana(lunedi);
   const propria = settimanaPropria(settimane, lunedi);
@@ -181,6 +188,55 @@ export default function TurniSection({
     }))
     .filter(g => g.membri.length > 0);
 
+  /* ---------- stampa ---------- */
+
+  // Il mese è quello in cui cade il lunedì della settimana mostrata.
+  // Le settimane ancora vuote resterebbero fogli di soli trattini: fuori.
+  const settimaneStampabili = settimaneDelMese(lunedi)
+    .filter(lun => settimanaPropria(settimane, lun));
+
+  /**
+   * Qui il foglio scelto è già nella pagina: useEffect gira a schermo
+   * aggiornato, quindi si può stampare senza aspettare.
+   * La classe sul body serve al CSS di stampa, che deve cambiare i
+   * margini della pagina da fuori della card.
+   */
+  // tenuto in un riferimento: se finisse tra le dipendenze dell'effetto
+  // la stampa ripartirebbe a ogni ridisegno
+  const avvisaRef = useRef(avvisa);
+  avvisaRef.current = avvisa;
+
+  useEffect(() => {
+    if (!stampa) return;
+
+    const classe = `stampa-${stampa.cosa}`;
+    document.body.classList.add(classe);
+
+    // la finestra di stampa blocca la pagina, ma dove non lo fa
+    // ci pensa "afterprint" a rimettere le cose a posto
+    const finito = () => setStampa(null);
+    window.addEventListener('afterprint', finito);
+
+    try {
+      window.print();
+    } catch {
+      avvisaRef.current?.('Non riesco ad aprire la stampa su questo dispositivo');
+    }
+    setStampa(null);
+
+    return () => {
+      window.removeEventListener('afterprint', finito);
+      document.body.classList.remove(classe);
+    };
+  }, [stampa]);
+
+  // il contatore rende ogni richiesta diversa dalla precedente: stampare
+  // due volte di fila la stessa cosa deve funzionare lo stesso
+  const avviaStampa = (cosa) => {
+    setScegliStampa(false);
+    setStampa(precedente => ({ cosa, n: (precedente?.n || 0) + 1 }));
+  };
+
   return (
     <section className="card sezione-turni">
       <div className="card-head">
@@ -221,8 +277,9 @@ export default function TurniSection({
         <>
           <div className="barra-turni">
             <div className="legenda">
-              {TURNI.filter(t => turniDisponibili.includes(t.valore)).map(t => (
-                <span key={t.valore || 'vuoto'} className={`legenda-voce ${t.classe}`}>
+              {/* "non previsto" non è un turno: nella legenda non ci sta */}
+              {TURNI.filter(t => t.valore && turniDisponibili.includes(t.valore)).map(t => (
+                <span key={t.valore} className={`legenda-voce ${t.classe}`}>
                   <i className="punto" />
                   {t.etichetta}
                 </span>
@@ -233,7 +290,7 @@ export default function TurniSection({
               <button className="btn btn-secondario" onClick={copiaSullaProssima}>
                 <span aria-hidden="true">📋</span> Copia sulla prossima
               </button>
-              <button className="btn btn-secondario" onClick={() => window.print()}>
+              <button className="btn btn-secondario" onClick={() => setScegliStampa(true)}>
                 <span aria-hidden="true">🖨️</span> Stampa / PDF
               </button>
             </div>
@@ -332,6 +389,43 @@ export default function TurniSection({
             </table>
           </ScrollArea>
         </>
+      )}
+
+      {/* Il mese: esiste nella pagina solo il tempo di stamparlo,
+          una settimana per foglio. A schermo non si vede mai. */}
+      {stampa?.cosa === 'mese' && (
+        <div className="foglio-mese">
+          {settimaneStampabili.map(lun => (
+            <div className="foglio-settimana" key={lun}>
+              <div className="intestazione-stampa">
+                <h1>{nomeLocale}</h1>
+                <p>Turni della settimana {etichettaSettimana(lun)}</p>
+              </div>
+
+              <TabellaStampa
+                lunedi={lun}
+                gruppi={gruppi}
+                settimane={settimane}
+                ferie={ferie}
+                giorni={giorni}
+                giorniLabel={giorniLabel}
+                giorniChiusura={giorniChiusura}
+                aperture={aperture}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {scegliStampa && (
+        <ScegliStampa
+          settimana={etichettaSettimana(lunedi)}
+          mese={etichettaMese(lunedi)}
+          settimaneCompilate={settimaneStampabili.length}
+          onSettimana={() => avviaStampa('settimana')}
+          onMese={() => avviaStampa('mese')}
+          onAnnulla={() => setScegliStampa(false)}
+        />
       )}
 
       {daConfermare && (() => {

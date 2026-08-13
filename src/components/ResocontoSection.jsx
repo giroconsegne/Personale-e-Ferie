@@ -102,8 +102,8 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
                 </tr>
                 <tr>
                   <th>Lavorati</th>
-                  <th>Mattine</th>
-                  <th>Sere</th>
+                  <th>Pranzi</th>
+                  <th>Cene</th>
                   <th>Ferie</th>
                   <th className="inizio-gruppo">Lavorati</th>
                   <th>Ferie</th>

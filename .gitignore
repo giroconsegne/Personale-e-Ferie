@@ -15,3 +15,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+
+# impostazioni del server di prova: servono solo sul computer di chi sviluppa
+.claude

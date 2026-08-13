@@ -460,10 +460,17 @@ h1, h2, h3 {
 
 .container {
   width: 100%;
-  max-width: 1160px;
   margin: 0 auto;
   padding: 28px 26px 64px;
   flex: 1;
+}
+
+/* su schermo largo le card usano tutta la larghezza disponibile */
+@media (min-width: 1160px) {
+  .container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
 }
 
 /* ============================================================
@@ -2543,6 +2550,65 @@ tr:hover .btn-invia,
   margin-top: 20px;
 }
 
+/* le due strade della stampa: settimana o mese */
+.scelte-stampa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scelta-stampa {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  color: var(--testo);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.scelta-stampa:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--brand-chiaro);
+}
+
+.scelta-stampa:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.scelta-icona {
+  font-size: 22px;
+}
+
+.scelta-testo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scelta-testo strong {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.scelta-testo span {
+  font-size: 12.5px;
+  color: var(--testo-2);
+}
+
+.nota-scelta {
+  font-size: 12.5px;
+  color: var(--testo-3);
+}
+
 .elenco-conflitti {
   list-style: none;
   display: flex;
@@ -2842,12 +2908,59 @@ tr:hover .btn-invia,
   display: none;
 }
 
+/* il mese da stampare vive nella pagina solo per il foglio: mai a schermo */
+.foglio-mese {
+  display: none;
+}
+
 @media print {
+  /* stampando il mese, al posto della settimana modificabile
+     vanno sul foglio tutte le settimane compilate */
+  .foglio-mese {
+    display: block;
+  }
+
+  body.stampa-mese .sezione-turni > .intestazione-stampa,
+  body.stampa-mese .sezione-turni > .scroll-area {
+    display: none !important;
+  }
+
+  /* una settimana per foglio */
+  .foglio-settimana {
+    break-after: page;
+  }
+
+  .foglio-settimana:last-child {
+    break-after: auto;
+  }
+
+  /* Su più fogli il margine non può stare sul contenitore: sarebbe solo
+     sopra al primo e sotto all'ultimo. Lo porta ogni settimana con sé. */
+  body.stampa-mese .container {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  body.stampa-mese .foglio-settimana {
+    padding: 12mm 0 10mm;
+  }
+
+  /* i turni della stampa del mese: stesso aspetto delle tendine sul foglio */
+  .turno-stampa {
+    font-size: 9.5pt;
+    font-weight: 700;
+  }
+
+  .turno-stampa.turno-mattina { color: var(--mattina); }
+  .turno-stampa.turno-sera { color: var(--sera); }
+  .turno-stampa.turno-riposo { color: var(--riposo); }
+  .turno-stampa.turno-vuoto { color: var(--vuoto); }
+
   /* Il margine lo mette il contenuto, non la pagina: nella finestra di
      stampa la voce "Margini" spesso è su "Nessuno" e il margine della
      pagina verrebbe ignorato. Così il bordo bianco c'è comunque. */
   @page {
-    size: A4 portrait;
+    size: A4 landscape;
     margin: 0;
   }
 
@@ -2879,13 +2992,16 @@ tr:hover .btn-invia,
 
   .container {
     max-width: none;
-    padding: 16mm 13mm 14mm !important;
+    padding: 12mm 13mm 10mm !important;
   }
 
   .card {
     border: none;
     border-radius: 0;
     box-shadow: none;
+    /* con più fogli il contenuto deve poter uscire dalla card, altrimenti
+       dalla seconda pagina in poi verrebbe tagliato */
+    overflow: visible;
   }
 
   .intestazione-stampa {
@@ -2914,9 +3030,11 @@ tr:hover .btn-invia,
     table-layout: fixed;
   }
 
+  /* in orizzontale il foglio è più basso: le righe restano compatte
+     in verticale, mentre in orizzontale c'è spazio da spendere */
   .tabella th,
   .tabella td {
-    padding: 6px 3px;
+    padding: 5px 6px;
     border-color: #ccc;
   }
 
@@ -2924,27 +3042,27 @@ tr:hover .btn-invia,
     break-inside: avoid;
   }
 
-  /* in verticale le sette colonne dei giorni sono strette:
-     testo più piccolo e nomi dei giorni che possono andare a capo */
+  /* in orizzontale le colonne dei giorni sono larghe: i nomi dei giorni
+     stanno su una riga sola e il testo resta di misura leggibile */
   .tabella th {
-    font-size: 8pt;
-    white-space: normal;
+    font-size: 9pt;
+    white-space: nowrap;
   }
 
-  .giorno-data { font-size: 7.5pt; }
+  .giorno-data { font-size: 8pt; }
 
   .tabella-turni .col-nome {
-    width: 23%;
+    width: 20%;
   }
 
-  .persona-nome { font-size: 9pt; }
+  .persona-nome { font-size: 10pt; }
 
   /* sul foglio contano i nomi, non i tondini colorati */
   .avatar { display: none; }
 
   .turno-ferie,
   .turno-chiuso {
-    font-size: 8.5pt;
+    font-size: 9.5pt;
   }
 
   /* le tendine diventano testo semplice */
@@ -2954,7 +3072,7 @@ tr:hover .btn-invia,
     padding: 0;
     border: none !important;
     background: transparent !important;
-    font-size: 8.5pt;
+    font-size: 9.5pt;
     font-weight: 700;
     white-space: normal;
   }

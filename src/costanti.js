@@ -10,8 +10,7 @@ export const GIORNI_SIGLA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
  * L'ordine conta: i dati salvati prima di questa divisione finiscono nella prima.
  */
 export const LOCALI = [
-  // Da Fratelli D'Auria non si lavora di mattina: quel turno non compare
-  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Sera', 'Riposo', ''] },
+  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Mattina', 'Sera', 'Riposo', ''] },
   { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Riposo', ''] }
 ];
 
@@ -34,10 +33,14 @@ export const slugReparto = (reparto) => reparto.toLowerCase();
 /**
  * Turni possibili. La stringa vuota è il turno "non previsto": la casella
  * resta vuota quando quel giorno la persona non è in organico.
+ *
+ * In pizzeria i turni si chiamano col servizio: Pranzo e Cena. Il valore
+ * salvato resta però 'Mattina' e 'Sera', quello di sempre: cambiarlo
+ * renderebbe illeggibili tutti i turni già scritti.
  */
 export const TURNI = [
-  { valore: 'Mattina', etichetta: 'Mattina', classe: 'turno-mattina' },
-  { valore: 'Sera', etichetta: 'Sera', classe: 'turno-sera' },
+  { valore: 'Mattina', etichetta: 'Pranzo', classe: 'turno-mattina' },
+  { valore: 'Sera', etichetta: 'Cena', classe: 'turno-sera' },
   { valore: 'Riposo', etichetta: 'Riposo', classe: 'turno-riposo' },
   { valore: '', etichetta: 'Non previsto', breve: '—', classe: 'turno-vuoto' }
 ];
@@ -51,13 +54,22 @@ export const classeTurno = (valore) =>
 export const etichettaTurno = (valore) =>
   TURNI.find(t => t.valore === valore)?.etichetta || 'Non previsto';
 
+/**
+ * Come il turno si legge dentro la casella: "non previsto" resta un
+ * trattino, così la settimana stampata è uguale a quella sullo schermo.
+ */
+export const etichettaCasella = (valore) => {
+  const turno = TURNI.find(t => t.valore === valore);
+  return turno?.breve ?? turno?.etichetta ?? 'Non previsto';
+};
+
 // Un turno vale come giorno di lavoro solo se non è riposo né "non previsto"
 export const eLavorativo = (turno) => turno === 'Mattina' || turno === 'Sera';
 
 /**
  * Quando è aperta la pizzeria, giorno per giorno della settimana.
- * A pranzo si lavora di mattina, a cena di sera: nei giorni di solo
- * pranzo (o sola cena) l'altro turno non si può nemmeno scegliere.
+ * Nei giorni di solo pranzo (o sola cena) l'altro turno non si può
+ * nemmeno scegliere.
  */
 export const APERTURE = [
   { valore: 'entrambi', etichetta: 'Pranzo e cena', breve: 'Pranzo e cena', turni: ['Mattina', 'Sera'] },

@@ -61,6 +61,26 @@ export const giorniDellaSettimana = (lunedi) => {
 };
 
 /**
+ * I lunedì delle settimane che toccano il mese di una certa data.
+ * La prima e l'ultima possono sconfinare nel mese vicino: una settimana
+ * di turni non si spezza a metà, si stampa intera.
+ */
+export function settimaneDelMese(iso) {
+  const d = aData(iso);
+  const ultimo = aIso(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+
+  const settimane = [];
+  let corrente = lunediDi(aIso(new Date(d.getFullYear(), d.getMonth(), 1)));
+
+  while (corrente <= ultimo) {
+    settimane.push(corrente);
+    corrente = spostaSettimana(corrente, 1);
+  }
+
+  return settimane;
+}
+
+/**
  * Espande un periodo in singole date, saltando i giorni di chiusura
  * (in pizzeria chiusa non si consuma un giorno di ferie).
  */
@@ -157,6 +177,11 @@ export function etichettaPeriodo({ inizio, fine }) {
 /** "10 agosto – 16 agosto 2026": intestazione di una settimana di turni. */
 export const etichettaSettimana = (lunedi) =>
   etichettaPeriodo({ inizio: lunedi, fine: giorniDellaSettimana(lunedi)[6] });
+
+const fmtMese = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
+
+/** "agosto 2026": il mese in cui cade una data. */
+export const etichettaMese = (iso) => fmtMese.format(aData(iso));
 
 const fmtGiornoBreve = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'numeric' });
 
