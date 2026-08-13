@@ -258,13 +258,17 @@ export default function TurniSection({
   const fuoriElenco = [...new Set(dipendenti.map(d => repartoDi(d)))]
     .filter(m => !mansioni.includes(m));
 
-  // Una sezione di tabella per mansione, saltando quelle senza personale
+  // Raggruppati per mansione: servono così al foglio del mese
   const gruppi = [...mansioni, ...fuoriElenco]
     .map(reparto => ({
       reparto,
       membri: dipendenti.filter(d => repartoDi(d) === reparto)
     }))
     .filter(g => g.membri.length > 0);
+
+  // In tabella invece i nomi vanno di fila: la mansione si legge già
+  // sotto ogni turno, e le righe di intestazione rubavano solo spazio.
+  const inTabella = gruppi.flatMap(g => g.membri);
 
   /* ---------- stampa ---------- */
 
@@ -422,20 +426,8 @@ export default function TurniSection({
                 </tr>
               </thead>
 
-              {gruppi.map(({ reparto, membri }) => (
-                <tbody key={reparto}>
-                  <tr className="riga-gruppo">
-                    <th scope="rowgroup" className="col-nome">
-                      <span className={`pill-reparto ${classeReparto(reparto)}`} style={stileMansione(reparto)}>
-                        {reparto}
-                      </span>
-                    </th>
-                    <td colSpan={giorni.length} className="cella-gruppo">
-                      {membri.length} {membri.length === 1 ? 'persona' : 'persone'}
-                    </td>
-                  </tr>
-
-                  {membri.map(dip => {
+              <tbody>
+                  {inTabella.map(dip => {
                     const suoiTurni = turniDi(dip.id);
                     const sueFerie = ferie[dip.id] || [];
 
@@ -509,8 +501,7 @@ export default function TurniSection({
                       </tr>
                     );
                   })}
-                </tbody>
-              ))}
+              </tbody>
             </table>
           </ScrollArea>
         </>
