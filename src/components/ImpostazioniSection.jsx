@@ -6,18 +6,12 @@ import {
   APERTURE,
   GIORNI,
   GIORNI_LABEL,
-  REPARTI,
   aperturaDi,
+  classeReparto,
   repartoDi,
-  slugReparto
+  stileMansione
 } from '../costanti';
 import { contaFerie, ferieDellAnno, annoCorrente } from '../date';
-
-const OPZIONI_REPARTO = REPARTI.map(r => ({
-  valore: r,
-  etichetta: r,
-  classe: `mansione rep-${slugReparto(r)}`
-}));
 
 export default function ImpostazioniSection({
   dipendenti,
@@ -25,11 +19,21 @@ export default function ImpostazioniSection({
   ferie,
   eliminaDipendente,
   cambiaReparto,
+  mansioni,
   giorniChiusura,
   aperture,
   apriAggiungiDipendente,
+  apriAggiungiMansione,
   apriGiorniChiusura
 }) {
+  // le mansioni cambiano da una pizzeria all'altra: l'elenco si costruisce qui
+  const opzioniMansione = mansioni.map(m => ({
+    valore: m,
+    etichetta: m,
+    classe: `mansione ${classeReparto(m)}`,
+    stile: stileMansione(m)
+  }));
+
   const [inModifica, setInModifica] = useState(null);
   const [valoreGiorni, setValoreGiorni] = useState('');
   const [daEliminare, setDaEliminare] = useState(null);
@@ -60,9 +64,14 @@ export default function ImpostazioniSection({
             <h2>Personale</h2>
             <p className="card-sub">Chi lavora in pizzeria, mansione e ferie spettanti</p>
           </div>
-          <button className="btn btn-primario" onClick={apriAggiungiDipendente}>
-            <span>＋</span> Aggiungi dipendente
-          </button>
+          <div className="azioni-testa">
+            <button className="btn btn-secondario" onClick={apriAggiungiMansione}>
+              <span>＋</span> Aggiungi mansione
+            </button>
+            <button className="btn btn-primario" onClick={apriAggiungiDipendente}>
+              <span>＋</span> Aggiungi dipendente
+            </button>
+          </div>
         </div>
 
         {dipendenti.length === 0 ? (
@@ -103,10 +112,13 @@ export default function ImpostazioniSection({
                       <td>
                         <Select
                           valore={reparto}
-                          opzioni={OPZIONI_REPARTO}
+                          opzioni={opzioniMansione}
                           onChange={(v) => cambiaReparto(dip.id, v)}
-                          classe={`pillola pillola-mansione rep-${slugReparto(reparto)}`}
+                          classe={`pillola pillola-mansione ${classeReparto(reparto)}`}
+                          stile={stileMansione(reparto)}
                           etichettaAria={`Mansione di ${dip.nome}`}
+                          // una mansione tolta altrove resta leggibile finché non si cambia
+                          etichettaFuoriElenco={reparto}
                         />
                       </td>
 

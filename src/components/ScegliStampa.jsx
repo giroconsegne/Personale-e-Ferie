@@ -3,12 +3,13 @@ import { createPortal } from 'react-dom';
 
 /**
  * Chiede cosa mandare in stampa: la sola settimana mostrata oppure
- * tutte le settimane compilate del mese, una per foglio.
+ * il mese intero, tutto su un foglio.
  */
 export default function ScegliStampa({
   settimana,
   mese,
-  settimaneCompilate,
+  giorniDelMese,
+  meseScritto,
   onSettimana,
   onMese,
   onAnnulla
@@ -21,7 +22,7 @@ export default function ScegliStampa({
     return () => window.removeEventListener('keydown', suTasto);
   }, [onAnnulla]);
 
-  const niente = settimaneCompilate === 0;
+  const niente = !meseScritto;
 
   return createPortal(
     <>
@@ -48,15 +49,15 @@ export default function ScegliStampa({
                 <strong>Tutto il mese di {mese}</strong>
                 <span>
                   {niente
-                    ? 'Nessuna settimana di questo mese ha turni scritti'
-                    : `${settimaneCompilate} ${settimaneCompilate === 1 ? 'settimana' : 'settimane'} con i turni scritti, un foglio ciascuna`}
+                    ? 'In questo mese non ci sono turni scritti'
+                    : `Tutti i ${giorniDelMese} giorni su un foglio solo`}
                 </span>
               </span>
             </button>
           </div>
 
           <p className="nota-scelta">
-            Le settimane ancora da compilare non vengono stampate.
+            Nel foglio del mese i giorni vanno in riga e le persone in colonna.
           </p>
         </div>
 

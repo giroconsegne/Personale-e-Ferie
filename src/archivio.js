@@ -17,8 +17,14 @@ const localeVuoto = ({ id, nome }) => ({
   nome,
   dipendenti: [],
   settimane: {},
+  // la mansione scelta giorno per giorno, dove non vale quella fissa
+  mansioniSettimane: {},
   ferie: {},
-  aperture: {}
+  aperture: {},
+  // le mansioni aggiunte a mano: quelle di partenza stanno in costanti.js
+  mansioni: [],
+  // e quelle di partenza che questa pizzeria ha tolto
+  mansioniTolte: []
 });
 
 /**

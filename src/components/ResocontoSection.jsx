@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
 import ScrollArea from './ScrollArea';
-import { repartoDi, slugReparto } from '../costanti';
+import { classeReparto, repartoDi, stileMansione } from '../costanti';
 import { aIso, conteggiaGiorni } from '../date';
 import { creaLettoreTurni } from '../turni';
 
@@ -117,7 +117,10 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
                         <Avatar nome={dip.nome} />
                         <div className="persona-testo">
                           <span className="persona-nome">{dip.nome}</span>
-                          <span className={`pill-reparto piccola rep-${slugReparto(repartoDi(dip))}`}>
+                          <span
+                            className={`pill-reparto piccola ${classeReparto(repartoDi(dip))}`}
+                            style={stileMansione(repartoDi(dip))}
+                          >
                             {repartoDi(dip)}
                           </span>
                         </div>

@@ -61,10 +61,23 @@ export const giorniDellaSettimana = (lunedi) => {
 };
 
 /**
- * I lunedì delle settimane che toccano il mese di una certa data.
- * La prima e l'ultima possono sconfinare nel mese vicino: una settimana
- * di turni non si spezza a metà, si stampa intera.
+ * Tutti i giorni del mese in cui cade una data, dal primo all'ultimo.
+ * Il mese è il mese: niente giorni presi in prestito dalle settimane
+ * che lo attraversano.
  */
+export function giorniDelMese(iso) {
+  const d = aData(iso);
+  const ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+
+  const giorni = [];
+  for (let g = 1; g <= ultimo; g++) {
+    giorni.push(aIso(new Date(d.getFullYear(), d.getMonth(), g)));
+  }
+
+  return giorni;
+}
+
+/** I lunedì delle settimane che toccano il mese di una certa data. */
 export function settimaneDelMese(iso) {
   const d = aData(iso);
   const ultimo = aIso(new Date(d.getFullYear(), d.getMonth() + 1, 0));

@@ -13,9 +13,11 @@ import {
   REPARTI,
   REPARTO_PREDEFINITO,
   aperturaDi,
+  classeReparto,
   giorniChiusuraDa,
+  mansioneGiaPresente,
   repartoDi,
-  slugReparto,
+  stileMansione,
   turniDelLocale
 } from './costanti';
 import { carica, salva, ascolta, online, statoVuoto } from './archivio';
@@ -38,7 +40,9 @@ function App() {
   const [avviso, setAvviso] = useState('');
   const [nuovoDipendente, setNuovoDipendente] = useState('');
   const [nuovoReparto, setNuovoReparto] = useState(REPARTO_PREDEFINITO);
+  const [nuovaMansione, setNuovaMansione] = useState('');
   const [showAddDrawer, setShowAddDrawer] = useState(false);
+  const [showMansioneDrawer, setShowMansioneDrawer] = useState(false);
   const [showGiorniDrawer, setShowGiorniDrawer] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const [activeSection, setActiveSection] = useState('turni');
@@ -56,6 +60,17 @@ function App() {
   const indiceLocale = Math.max(0, locali.findIndex(l => l.id === idLocale));
   const locale = locali[indiceLocale];
   const { dipendenti, settimane, ferie, aperture } = locale;
+  const mansioniSettimane = locale.mansioniSettimane || {};
+
+  // Le mansioni di questa pizzeria: quelle di partenza che non sono state
+  // tolte, più quelle aggiunte a mano
+  const mansioniTolte = locale.mansioniTolte || [];
+  const mansioni = [
+    ...REPARTI.filter(r => !mansioniTolte.includes(r)),
+    ...(locale.mansioni || [])
+  ];
+
+  const quantiNellaMansione = (nome) => dipendenti.filter(d => repartoDi(d) === nome).length;
 
   // i giorni chiusi si ricavano dagli orari: il resto dell'app ragiona su quelli
   const giorniChiusura = giorniChiusuraDa(aperture);
@@ -66,6 +81,7 @@ function App() {
 
   const setDipendenti = (v) => modificaLocale({ dipendenti: v });
   const setSettimane = (v) => modificaLocale({ settimane: v });
+  const setMansioniSettimane = (v) => modificaLocale({ mansioniSettimane: v });
   const setFerie = (v) => modificaLocale({ ferie: v });
 
   const cambiaPizzeria = (id) => {
@@ -179,6 +195,50 @@ function App() {
     setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
   };
 
+  // Aggiungi mansione: resta a questa pizzeria, l'altra ha le sue
+  const aggiungiMansione = () => {
+    const nome = nuovaMansione.trim();
+    if (!nome) return;
+
+    if (mansioneGiaPresente(mansioni, nome)) {
+      avvisa(`La mansione ${nome} c'è già`);
+      return;
+    }
+
+    modificaLocale({ mansioni: [...(locale.mansioni || []), nome] });
+    setNuovaMansione('');
+    setShowMansioneDrawer(false);
+    avvisa(`Mansione ${nome} aggiunta`);
+  };
+
+  /**
+   * Elimina mansione. Con qualcuno dentro non si può: resterebbe gente
+   * con una mansione che non esiste più, invisibile nella tabella dei
+   * turni. Prima si spostano le persone, poi si toglie la mansione.
+   */
+  const eliminaMansione = (nome) => {
+    const quanti = quantiNellaMansione(nome);
+    if (quanti > 0) {
+      avvisa(`${nome}: prima sposta ${quanti === 1 ? 'la persona' : `le ${quanti} persone`} in un'altra mansione`);
+      return;
+    }
+
+    if (mansioni.length <= 1) {
+      avvisa('Deve restare almeno una mansione');
+      return;
+    }
+
+    if (REPARTI.includes(nome)) {
+      modificaLocale({ mansioniTolte: [...mansioniTolte, nome] });
+    } else {
+      modificaLocale({ mansioni: (locale.mansioni || []).filter(m => m !== nome) });
+    }
+
+    // il pannello del dipendente nuovo può essere rimasto puntato su di lei
+    if (nuovoReparto === nome) setNuovoReparto(mansioni.find(m => m !== nome));
+    avvisa(`Mansione ${nome} eliminata`);
+  };
+
   const cambiaApertura = (giorno, valore) => {
     modificaLocale({ aperture: { ...aperture, [giorno]: valore } });
   };
@@ -194,7 +254,7 @@ function App() {
     .filter(Boolean);
 
   // Nel riepilogo del menu compaiono solo le mansioni con qualcuno dentro
-  const conteggioReparti = REPARTI
+  const conteggioReparti = mansioni
     .map(r => ({ reparto: r, quanti: dipendenti.filter(d => repartoDi(d) === r).length }))
     .filter(r => r.quanti > 0);
 
@@ -277,7 +337,7 @@ function App() {
             <ul className="riepilogo-reparti">
               {conteggioReparti.map(({ reparto, quanti }) => (
                 <li key={reparto}>
-                  <span className={`punto-reparto rep-${slugReparto(reparto)}`} />
+                  <span className={`punto-reparto ${classeReparto(reparto)}`} style={stileMansione(reparto)} />
                   <span className="riepilogo-nome">{reparto}</span>
                   <span className="riepilogo-num">{quanti}</span>
                 </li>
@@ -346,11 +406,14 @@ function App() {
               dipendenti={dipendenti}
               settimane={settimane}
               setSettimane={setSettimane}
+              mansioniSettimane={mansioniSettimane}
+              setMansioniSettimane={setMansioniSettimane}
               ferie={ferie}
               giorni={GIORNI}
               giorniLabel={GIORNI_LABEL}
               giorniChiusura={giorniChiusura}
               aperture={aperture}
+              mansioni={mansioni}
               nomeLocale={locale.nome}
               turniDisponibili={turniDelLocale(locale.id)}
               avvisa={avvisa}
@@ -392,9 +455,11 @@ function App() {
               ferie={ferie}
               eliminaDipendente={eliminaDipendente}
               cambiaReparto={cambiaReparto}
+              mansioni={mansioni}
               giorniChiusura={giorniChiusura}
               aperture={aperture}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
+              apriAggiungiMansione={() => setShowMansioneDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}
             />
           )}
@@ -483,11 +548,12 @@ function App() {
               <div className="scelta-reparto">
                 <span className="campo-label">Mansione</span>
                 <div className="segmenti">
-                  {REPARTI.map(r => (
+                  {mansioni.map(r => (
                     <button
                       key={r}
                       type="button"
-                      className={`segmento ${nuovoReparto === r ? `attivo rep-${slugReparto(r)}` : ''}`}
+                      className={`segmento ${nuovoReparto === r ? `attivo ${classeReparto(r)}` : ''}`}
+                      style={nuovoReparto === r ? stileMansione(r) : undefined}
                       onClick={() => setNuovoReparto(r)}
                     >
                       {r}
@@ -502,6 +568,82 @@ function App() {
                 disabled={!nuovoDipendente.trim()}
               >
                 Aggiungi in {nuovoReparto}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ---------- Pannello: aggiungi mansione ---------- */}
+      {showMansioneDrawer && (
+        <>
+          <div className="drawer-overlay" onClick={() => setShowMansioneDrawer(false)} />
+          <div className="drawer">
+            <div className="drawer-handle" />
+            <div className="drawer-body">
+              <div className="drawer-head">
+                <h2>Aggiungi mansione</h2>
+                <button className="icon-btn" onClick={() => setShowMansioneDrawer(false)} title="Chiudi">✕</button>
+              </div>
+              <p className="drawer-sub">
+                Vale per {locale.nome}: l'altra pizzeria ha le sue. La ritrovi
+                nell'elenco delle mansioni di ogni dipendente.
+              </p>
+
+              <input
+                className="campo"
+                type="text"
+                value={nuovaMansione}
+                onChange={(e) => setNuovaMansione(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && aggiungiMansione()}
+                placeholder="Per esempio Fornaio"
+                autoFocus
+              />
+
+              <div className="scelta-reparto">
+                <span className="campo-label">Mansioni di adesso</span>
+                <div className="elenco-mansioni">
+                  {mansioni.map(m => {
+                    const quanti = quantiNellaMansione(m);
+
+                    return (
+                      <span
+                        key={m}
+                        className={`pill-reparto pill-con-x ${classeReparto(m)}`}
+                        style={stileMansione(m)}
+                      >
+                        {m}
+                        {quanti > 0 && <span className="quanti-mansione">{quanti}</span>}
+                        <button
+                          type="button"
+                          className="togli-mansione"
+                          onClick={() => eliminaMansione(m)}
+                          disabled={quanti > 0 || mansioni.length <= 1}
+                          title={
+                            quanti > 0
+                              ? `${quanti === 1 ? 'C\'è una persona' : `Ci sono ${quanti} persone`} in ${m}: spostala prima`
+                              : `Elimina ${m}`
+                          }
+                          aria-label={`Elimina la mansione ${m}`}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="nota-mansioni">
+                  Una mansione si elimina solo quando non c'è più nessuno dentro:
+                  il numero accanto dice quante persone la fanno.
+                </p>
+              </div>
+
+              <button
+                className="btn btn-primario btn-blocco"
+                onClick={aggiungiMansione}
+                disabled={!nuovaMansione.trim()}
+              >
+                Aggiungi mansione
               </button>
             </div>
           </div>

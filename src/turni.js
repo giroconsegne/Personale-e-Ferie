@@ -19,6 +19,23 @@ export function turniDellaSettimana(settimane, dipId, lunedi) {
 export const turnoDelGiorno = (turniSettimana, giorno) =>
   turniSettimana?.[giorno] ?? TURNO_PREDEFINITO;
 
+/**
+ * La mansione può cambiare di giorno in giorno: chi sta in pizzeria il
+ * venerdì può stare in cassa il sabato. Queste scelte stanno in una
+ * struttura a parte, fatta come `settimane`:
+ *
+ *   mansioniSettimane = { "2026-08-10": { "<id>": { sabato: 'Cassa' } } }
+ *
+ * Dove non c'è scritto niente vale la mansione fissa della persona,
+ * quella delle Impostazioni.
+ */
+export function mansioniDellaSettimana(mansioniSettimane, dipId, lunedi) {
+  return mansioniSettimane?.[lunedi]?.[dipId] || {};
+}
+
+export const mansioneDelGiorno = (mansioniPersona, giorno, predefinita) =>
+  mansioniPersona?.[giorno] || predefinita;
+
 /** true se la settimana ha dei turni scritti. */
 export const settimanaPropria = (settimane, lunedi) =>
   Object.keys(settimane?.[lunedi] || {}).length > 0;
@@ -27,4 +44,14 @@ export const settimanaPropria = (settimane, lunedi) =>
 export function creaLettoreTurni(settimane) {
   return (dipId, iso) =>
     turnoDelGiorno(turniDellaSettimana(settimane, dipId, lunediDi(iso)), chiaveGiorno(iso));
+}
+
+/** Mansione di una persona in una data qualsiasi, con la sua fissa come ripiego. */
+export function creaLettoreMansioni(mansioniSettimane) {
+  return (dipId, iso, predefinita) =>
+    mansioneDelGiorno(
+      mansioniDellaSettimana(mansioniSettimane, dipId, lunediDi(iso)),
+      chiaveGiorno(iso),
+      predefinita
+    );
 }

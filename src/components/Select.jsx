@@ -14,6 +14,8 @@ export default function Select({
   opzioni,
   onChange,
   classe = '',
+  // le mansioni aggiunte a mano portano i colori in uno stile, non in una classe
+  stile,
   etichettaAria,
   etichettaFuoriElenco
 }) {
@@ -111,6 +113,7 @@ export default function Select({
         type="button"
         ref={triggerRef}
         className={`select-trigger ${classe} ${aperto ? 'aperto' : ''}`}
+        style={stile}
         onClick={() => (aperto ? chiudi() : apri())}
         onKeyDown={suTastoTrigger}
         aria-haspopup="listbox"
@@ -144,7 +147,7 @@ export default function Select({
               onMouseEnter={() => setEvidenziato(i)}
               onClick={() => scegli(o)}
             >
-              {o.classe && <span className={`punto-opzione ${o.classe}`} />}
+              {o.classe && <span className={`punto-opzione ${o.classe}`} style={o.stile} />}
               <span className="select-opzione-testo">{o.etichetta}</span>
               {o.valore === valore && (
                 <svg className="select-spunta" width="12" height="10" viewBox="0 0 12 10" aria-hidden="true">
