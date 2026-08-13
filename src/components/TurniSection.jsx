@@ -4,30 +4,37 @@ import Select from './Select';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
 import ScegliStampa from './ScegliStampa';
-import TabellaStampa from './TabellaStampa';
+import TabellaMeseStampa from './TabellaMeseStampa';
 import {
   APERTURE,
   GIORNI_SIGLA,
-  REPARTI,
   TURNI,
   aperturaDi,
+  classeReparto,
   classeTurno,
   eLavorativo,
   etichettaTurno,
   repartoDi,
-  slugReparto,
+  stileMansione,
   turniDelGiorno
 } from '../costanti';
 import {
   dataBreve,
   etichettaMese,
   etichettaSettimana,
+  giorniDelMese,
   giorniDellaSettimana,
   lunediDiOggi,
   settimaneDelMese,
   spostaSettimana
 } from '../date';
-import { settimanaPropria, turniDellaSettimana, turnoDelGiorno } from '../turni';
+import {
+  mansioneDelGiorno,
+  mansioniDellaSettimana,
+  settimanaPropria,
+  turniDellaSettimana,
+  turnoDelGiorno
+} from '../turni';
 
 const comeOpzione = (t) => ({
   valore: t.valore,
@@ -43,11 +50,14 @@ export default function TurniSection({
   dipendenti,
   settimane,
   setSettimane,
+  mansioniSettimane,
+  setMansioniSettimane,
   ferie,
   giorni,
   giorniLabel,
   giorniChiusura,
   aperture,
+  mansioni,
   nomeLocale,
   turniDisponibili,
   avvisa
@@ -62,6 +72,14 @@ export default function TurniSection({
       .map(v => comeOpzione(TURNI.find(t => t.valore === v))),
     ...SENZA_LAVORO
   ];
+
+  // Le mansioni fra cui scegliere sotto ogni turno
+  const opzioniMansione = mansioni.map(m => ({
+    valore: m,
+    etichetta: m,
+    classe: `mansione ${classeReparto(m)}`,
+    stile: stileMansione(m)
+  }));
 
   const [lunedi, setLunedi] = useState(lunediDiOggi);
   const [daSovrascrivere, setDaSovrascrivere] = useState(null);
@@ -89,16 +107,34 @@ export default function TurniSection({
     });
   };
 
-  /** Chi altro, nella stessa mansione, quel giorno non lavora. */
+  /* ---------- la mansione, giorno per giorno ---------- */
+
+  const mansioniDi = (dipId) => mansioniDellaSettimana(mansioniSettimane, dipId, lunedi);
+
+  /** La mansione di quel giorno: quella scelta, o quella fissa della persona. */
+  const mansioneDi = (dip, giorno) =>
+    mansioneDelGiorno(mansioniDi(dip.id), giorno, repartoDi(dip));
+
+  const cambiaMansione = (dipId, giorno, valore) => {
+    setMansioniSettimane({
+      ...mansioniSettimane,
+      [lunedi]: {
+        ...(mansioniSettimane[lunedi] || {}),
+        [dipId]: { ...mansioniDi(dipId), [giorno]: valore }
+      }
+    });
+  };
+
+  /** Chi altro, nella stessa mansione di quel giorno, quel giorno non lavora. */
   const altriFermi = (dipId, giorno) => {
     const dip = dipendenti.find(d => d.id === dipId);
     if (!dip) return [];
 
     const data = dateSettimana[giorni.indexOf(giorno)];
-    const mansione = repartoDi(dip);
+    const mansione = mansioneDi(dip, giorno);
 
     return dipendenti
-      .filter(d => d.id !== dipId && repartoDi(d) === mansione)
+      .filter(d => d.id !== dipId && mansioneDi(d, giorno) === mansione)
       .map(d => {
         if ((ferie[d.id] || []).includes(data)) return { dip: d, motivo: 'in ferie' };
         const turno = turnoDelGiorno(turniDi(d.id), giorno);
@@ -124,10 +160,15 @@ export default function TurniSection({
 
   const scriviSettimana = (destinazione) => {
     const copia = {};
+    const copiaMansioni = {};
     dipendenti.forEach(dip => {
       copia[dip.id] = { ...turniDi(dip.id) };
+      // le mansioni scelte giorno per giorno viaggiano con i turni
+      const sue = mansioniDi(dip.id);
+      if (Object.keys(sue).length > 0) copiaMansioni[dip.id] = { ...sue };
     });
 
+    setMansioniSettimane({ ...mansioniSettimane, [destinazione]: copiaMansioni });
     setSettimane({ ...settimane, [destinazione]: copia });
     setLunedi(destinazione);
     avvisa?.(`Turni copiati sulla settimana ${etichettaSettimana(destinazione)}`);
@@ -148,7 +189,15 @@ export default function TurniSection({
       let valore;
       if (giorniChiusura.includes(giorni[i])) valore = 'Chiuso';
       else if (sueFerie.includes(data)) valore = 'Ferie';
-      else valore = etichettaTurno(turnoDelGiorno(suoiTurni, giorni[i]));
+      else {
+        const turno = turnoDelGiorno(suoiTurni, giorni[i]);
+        valore = etichettaTurno(turno);
+
+        // la mansione si scrive solo quando cambia da quella di sempre:
+        // ripeterla sette volte sarebbe rumore
+        const mansione = mansioneDi(dip, giorni[i]);
+        if (eLavorativo(turno) && mansione !== repartoDi(dip)) valore += ` (${mansione})`;
+      }
       return `${GIORNI_SIGLA[i]} ${dataBreve(data)} — ${valore}`;
     });
 
@@ -180,8 +229,14 @@ export default function TurniSection({
     }
   };
 
+  // Se qualcuno ha una mansione che non è più in elenco (tolta da un altro
+  // dispositivo) il suo gruppo va mostrato lo stesso: nessuno deve sparire
+  // dalla settimana solo perché la sua mansione non c'è più.
+  const fuoriElenco = [...new Set(dipendenti.map(d => repartoDi(d)))]
+    .filter(m => !mansioni.includes(m));
+
   // Una sezione di tabella per mansione, saltando quelle senza personale
-  const gruppi = REPARTI
+  const gruppi = [...mansioni, ...fuoriElenco]
     .map(reparto => ({
       reparto,
       membri: dipendenti.filter(d => repartoDi(d) === reparto)
@@ -191,9 +246,12 @@ export default function TurniSection({
   /* ---------- stampa ---------- */
 
   // Il mese è quello in cui cade il lunedì della settimana mostrata.
-  // Le settimane ancora vuote resterebbero fogli di soli trattini: fuori.
-  const settimaneStampabili = settimaneDelMese(lunedi)
-    .filter(lun => settimanaPropria(settimane, lun));
+  const giorniDaStampare = giorniDelMese(lunedi).length;
+
+  // Un mese senza nemmeno una settimana compilata sarebbe un foglio di
+  // soli trattini: la scelta resta lì ma spenta.
+  const meseHaTurni = settimaneDelMese(lunedi)
+    .some(lun => settimanaPropria(settimane, lun));
 
   /**
    * Qui il foglio scelto è già nella pagina: useEffect gira a schermo
@@ -326,7 +384,9 @@ export default function TurniSection({
                 <tbody key={reparto}>
                   <tr className="riga-gruppo">
                     <th scope="rowgroup" className="col-nome">
-                      <span className={`pill-reparto rep-${slugReparto(reparto)}`}>{reparto}</span>
+                      <span className={`pill-reparto ${classeReparto(reparto)}`} style={stileMansione(reparto)}>
+                        {reparto}
+                      </span>
                     </th>
                     <td colSpan={giorni.length} className="cella-gruppo">
                       {membri.length} {membri.length === 1 ? 'persona' : 'persone'}
@@ -369,14 +429,37 @@ export default function TurniSection({
                                   <span aria-hidden="true">🏖️</span> Ferie
                                 </span>
                               ) : (
-                                <Select
-                                  valore={valore}
-                                  opzioni={opzioniDelGiorno(giorno)}
-                                  onChange={(v) => cambiaTurno(dip.id, giorno, v)}
-                                  classe={`pillola ${classeTurno(valore)}`}
-                                  etichettaAria={`Turno di ${dip.nome}`}
-                                  etichettaFuoriElenco={etichettaTurno(valore)}
-                                />
+                                <div className="casella-turno">
+                                  <Select
+                                    valore={valore}
+                                    opzioni={opzioniDelGiorno(giorno)}
+                                    onChange={(v) => cambiaTurno(dip.id, giorno, v)}
+                                    classe={`pillola ${classeTurno(valore)}`}
+                                    etichettaAria={`Turno di ${dip.nome}`}
+                                    etichettaFuoriElenco={etichettaTurno(valore)}
+                                  />
+
+                                  {/* la mansione si sceglie solo dove si lavora:
+                                      a riposo o senza turno non vuol dire niente */}
+                                  {eLavorativo(valore) && (() => {
+                                    const mansione = mansioneDi(dip, giorno);
+                                    const suaFissa = mansione === repartoDi(dip);
+
+                                    return (
+                                      <div className={`riga-mansione ${suaFissa ? 'mansione-fissa' : ''}`}>
+                                        <Select
+                                          valore={mansione}
+                                          opzioni={opzioniMansione}
+                                          onChange={(v) => cambiaMansione(dip.id, giorno, v)}
+                                          classe={`pillola pillola-mansione select-mansione ${classeReparto(mansione)}`}
+                                          stile={stileMansione(mansione)}
+                                          etichettaAria={`Mansione di ${dip.nome}`}
+                                          etichettaFuoriElenco={mansione}
+                                        />
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
                               )}
                             </td>
                           );
@@ -392,28 +475,22 @@ export default function TurniSection({
       )}
 
       {/* Il mese: esiste nella pagina solo il tempo di stamparlo,
-          una settimana per foglio. A schermo non si vede mai. */}
+          tutto su un foglio. A schermo non si vede mai. */}
       {stampa?.cosa === 'mese' && (
         <div className="foglio-mese">
-          {settimaneStampabili.map(lun => (
-            <div className="foglio-settimana" key={lun}>
-              <div className="intestazione-stampa">
-                <h1>{nomeLocale}</h1>
-                <p>Turni della settimana {etichettaSettimana(lun)}</p>
-              </div>
+          <div className="intestazione-stampa">
+            <h1>{nomeLocale}</h1>
+            <p>Turni di {etichettaMese(lunedi)}</p>
+          </div>
 
-              <TabellaStampa
-                lunedi={lun}
-                gruppi={gruppi}
-                settimane={settimane}
-                ferie={ferie}
-                giorni={giorni}
-                giorniLabel={giorniLabel}
-                giorniChiusura={giorniChiusura}
-                aperture={aperture}
-              />
-            </div>
-          ))}
+          <TabellaMeseStampa
+            mese={lunedi}
+            gruppi={gruppi}
+            settimane={settimane}
+            mansioniSettimane={mansioniSettimane}
+            ferie={ferie}
+            aperture={aperture}
+          />
         </div>
       )}
 
@@ -421,7 +498,8 @@ export default function TurniSection({
         <ScegliStampa
           settimana={etichettaSettimana(lunedi)}
           mese={etichettaMese(lunedi)}
-          settimaneCompilate={settimaneStampabili.length}
+          giorniDelMese={giorniDaStampare}
+          meseScritto={meseHaTurni}
           onSettimana={() => avviaStampa('settimana')}
           onMese={() => avviaStampa('mese')}
           onAnnulla={() => setScegliStampa(false)}

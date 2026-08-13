@@ -20,15 +20,44 @@ export const turniDelLocale = (idLocale) =>
 
 // Le mansioni sono salvate nel campo "reparto" dei dipendenti: il nome della
 // chiave resta quello di prima per non perdere i dati già inseriti.
+// Queste sono quelle di partenza; ogni pizzeria può aggiungere le sue.
 export const REPARTI = ['Pizzeria', 'Cucina', 'Sala', 'Bar', 'Cassa', 'Lavapiatti'];
 
 export const REPARTO_PREDEFINITO = 'Pizzeria';
 
-// Mansione valida per un dipendente, anche se salvato prima dell'introduzione delle mansioni
-export const repartoDi = (dip) =>
-  REPARTI.includes(dip.reparto) ? dip.reparto : REPARTO_PREDEFINITO;
+/**
+ * Mansione di un dipendente. Vale qualunque nome: oltre a quelle di
+ * partenza ci sono quelle aggiunte a mano. Resta il valore predefinito
+ * per chi era stato salvato prima che le mansioni esistessero.
+ */
+export const repartoDi = (dip) => {
+  const suo = dip?.reparto;
+  return typeof suo === 'string' && suo.trim() ? suo : REPARTO_PREDEFINITO;
+};
 
 export const slugReparto = (reparto) => reparto.toLowerCase();
+
+/** Tinta stabile ricavata dal nome, come per i tondini delle persone. */
+const tintaMansione = (nome) => {
+  let somma = 0;
+  for (const c of nome) somma = (somma + c.charCodeAt(0) * 7) % 360;
+  return somma;
+};
+
+/**
+ * I colori di una mansione. Quelle di partenza hanno la loro classe nel
+ * CSS; quelle aggiunte a mano portano la tinta ricavata dal nome, così
+ * ognuna ha sempre lo stesso colore ovunque compaia.
+ */
+export const classeReparto = (reparto) =>
+  REPARTI.includes(reparto) ? `rep-${slugReparto(reparto)}` : 'rep-extra';
+
+export const stileMansione = (reparto) =>
+  REPARTI.includes(reparto) ? undefined : { '--tinta-rep': tintaMansione(reparto) };
+
+/** Una mansione nuova non può essere vuota né ripetere una che c'è già. */
+export const mansioneGiaPresente = (mansioni, nome) =>
+  mansioni.some(m => m.toLowerCase() === nome.trim().toLowerCase());
 
 /**
  * Turni possibili. La stringa vuota è il turno "non previsto": la casella

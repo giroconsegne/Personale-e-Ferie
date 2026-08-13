@@ -3,7 +3,7 @@ import Avatar from './Avatar';
 import DatePicker from './DatePicker';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
-import { repartoDi, slugReparto } from '../costanti';
+import { classeReparto, repartoDi, stileMansione } from '../costanti';
 import {
   giorniDelPeriodo,
   raggruppaInPeriodi,
@@ -59,6 +59,16 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
     const uniti = [...new Set([...esistenti, ...anteprima.giorni])].sort();
 
     setFerie({ ...ferie, [selectedDipendente]: uniti });
+
+    // Le ferie si possono segnare in qualunque anno, ma la pagina ne mostra
+    // uno alla volta: se il periodo è di un altro anno ci si sposta sopra,
+    // altrimenti i giorni appena inseriti sembrerebbero spariti.
+    const annoDelPeriodo = Number(dal.slice(0, 4));
+    if (annoDelPeriodo !== anno) {
+      setAnno(annoDelPeriodo);
+      avvisa?.(`Ferie inserite nel ${annoDelPeriodo}: ti ho spostato su quell'anno`);
+    }
+
     setDal('');
     setAl('');
   };
@@ -87,8 +97,12 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
     setAl('');
   };
 
-  // Il monte ferie si azzera ogni anno: si guarda un anno alla volta
-  const giorniSelezionato = ferieDellAnno(ferie[selectedDipendente] || [], anno);
+  // Tutte le ferie della persona: servono al calendarietto, che segna i
+  // giorni già presi anche quando si sconfina in un altro anno
+  const ferieDip = ferie[selectedDipendente] || [];
+
+  // Il monte ferie si azzera ogni anno: i conti si fanno un anno alla volta
+  const giorniSelezionato = ferieDellAnno(ferieDip, anno);
 
   const cambiaAnno = (delta) => {
     setAnno(a => a + delta);
@@ -101,7 +115,10 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
       <div className="card-head">
         <div>
           <h2>Ferie</h2>
-          <p className="card-sub">Tocca una persona per inserire o togliere i suoi giorni</p>
+          <p className="card-sub">
+            Tocca una persona per inserire o togliere i suoi giorni. I conteggi
+            sono quelli dell'anno mostrato qui a fianco.
+          </p>
         </div>
         <div className="navigazione-mese">
           <button className="icon-btn" onClick={() => cambiaAnno(-1)} title="Anno precedente">‹</button>
@@ -172,7 +189,9 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                       </td>
 
                       <td>
-                        <span className={`pill-reparto rep-${slugReparto(reparto)}`}>{reparto}</span>
+                        <span className={`pill-reparto ${classeReparto(reparto)}`} style={stileMansione(reparto)}>
+                          {reparto}
+                        </span>
                       </td>
 
                       <td><span className="num num-neutro">{dip.giorni_ferie}</span></td>
@@ -209,10 +228,8 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                   <DatePicker
                     valore={dal}
                     onChange={setDal}
-                    min={`${anno}-01-01`}
-                    max={`${anno}-12-31`}
                     giorniChiusura={giorniChiusura}
-                    ferieEsistenti={giorniSelezionato}
+                    ferieEsistenti={ferieDip}
                     placeholder="Scegli il giorno"
                     etichettaAria="Data iniziale del periodo"
                   />
@@ -222,10 +239,9 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
                   <DatePicker
                     valore={al}
                     onChange={setAl}
-                    min={dal || `${anno}-01-01`}
-                    max={`${anno}-12-31`}
+                    min={dal || undefined}
                     giorniChiusura={giorniChiusura}
-                    ferieEsistenti={giorniSelezionato}
+                    ferieEsistenti={ferieDip}
                     inizioIntervallo={dal || null}
                     placeholder="Un solo giorno"
                     etichettaAria="Data finale del periodo"

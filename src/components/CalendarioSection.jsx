@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
-import { GIORNI, TURNI, eLavorativo, repartoDi, slugReparto } from '../costanti';
+import { GIORNI, TURNI, classeReparto, eLavorativo, repartoDi, stileMansione } from '../costanti';
 import { creaLettoreTurni } from '../turni';
 import {
   aData,
@@ -234,7 +234,8 @@ export default function CalendarioSection({ dipendenti, settimane, ferie, giorni
                               {g.persone.map(dip => (
                                 <li
                                   key={dip.id}
-                                  className={`persona-chip rep-${slugReparto(repartoDi(dip))}`}
+                                  className={`persona-chip ${classeReparto(repartoDi(dip))}`}
+                                  style={stileMansione(repartoDi(dip))}
                                   title={`${dip.nome} — ${repartoDi(dip)}`}
                                 >
                                   <Avatar nome={dip.nome} size="sm" />
@@ -261,7 +262,8 @@ export default function CalendarioSection({ dipendenti, settimane, ferie, giorni
                         {mostrati.map(dip => (
                           <li
                             key={dip.id}
-                            className={`persona-chip rep-${slugReparto(repartoDi(dip))}`}
+                            className={`persona-chip ${classeReparto(repartoDi(dip))}`}
+                            style={stileMansione(repartoDi(dip))}
                             title={`${dip.nome} — ${repartoDi(dip)}`}
                           >
                             <Avatar nome={dip.nome} size="sm" />
@@ -294,7 +296,10 @@ export default function CalendarioSection({ dipendenti, settimane, ferie, giorni
                     <li key={dip.id}>
                       <Avatar nome={dip.nome} />
                       <span className="riepilogo-persona">{dip.nome}</span>
-                      <span className={`pill-reparto rep-${slugReparto(repartoDi(dip))}`}>
+                      <span
+                        className={`pill-reparto ${classeReparto(repartoDi(dip))}`}
+                        style={stileMansione(repartoDi(dip))}
+                      >
                         {repartoDi(dip)}
                       </span>
                       <span className="ferie-quanti">
