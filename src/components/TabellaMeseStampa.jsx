@@ -2,13 +2,11 @@ import React from 'react';
 import {
   GIORNI,
   GIORNI_SIGLA,
-  classeReparto,
   classeTurno,
   eChiusoIlGiorno,
   eLavorativo,
   etichettaCasella,
-  repartoDi,
-  stileMansione
+  repartoDi
 } from '../costanti';
 import { chiaveGiorno, dataBreve, giorniDelMese } from '../date';
 import { creaLettoreMansioni, creaLettoreTurni } from '../turni';
@@ -44,18 +42,11 @@ export default function TabellaMeseStampa({
 
   return (
     <table className="tabella tabella-mese">
+      {/* le persone restano in ordine di mansione, ma sul foglio la riga
+          delle mansioni non si scrive: ruba spazio e i nomi bastano */}
       <thead>
         <tr>
-          <th className="col-giorno" rowSpan={2}>Giorno</th>
-          {gruppi.map(({ reparto, membri }) => (
-            <th key={reparto} colSpan={membri.length} className="testa-mansione">
-              <span className={`pill-reparto ${classeReparto(reparto)}`} style={stileMansione(reparto)}>
-                {reparto}
-              </span>
-            </th>
-          ))}
-        </tr>
-        <tr>
+          <th className="col-giorno">Giorno</th>
           {persone.map(dip => (
             <th key={dip.id} className="testa-persona">{dip.nome}</th>
           ))}

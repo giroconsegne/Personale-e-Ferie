@@ -2724,9 +2724,9 @@ h1, h2, h3 {
   color: var(--testo-2);
 }
 
-/* «Solo cena» sotto quasi ogni giorno è solo rumore: chi compila lo sa
-   già, e le tendine mostrano comunque la sola cena. Sul foglio stampato
-   invece resta, perché lo legge chi non ha davanti le impostazioni. */
+/* «Solo cena» sotto quasi ogni giorno è solo rumore, a schermo come sul
+   foglio: le caselle dicono già che si lavora di sera. Resta invece il
+   «Chiuso», che è l'eccezione da vedere. */
 .tabella-turni .badge-cena {
   display: none;
 }
@@ -3315,11 +3315,6 @@ tr:hover .btn-invia,
     color: var(--testo);
   }
 
-  .tabella-mese .testa-mansione {
-    padding-bottom: 3px;
-    text-align: center;
-  }
-
   .tabella-mese .riga-chiusa .col-giorno {
     color: var(--testo-3);
   }
@@ -3461,20 +3456,17 @@ tr:hover .btn-invia,
 
   .giorno-data { font-size: 8pt; }
 
-  /* sul foglio l'orario del giorno si scrive anche quando è «solo cena» */
-  .tabella-turni .badge-cena {
-    display: inline-block;
-  }
-
   .tabella-turni .col-nome {
-    width: 18%;
+    width: 17%;
   }
 
-  /* l'ultima colonna del foglio: i giorni lavorati in settimana */
+  /* L'ultima colonna del foglio: i giorni lavorati in settimana.
+     L'intestazione va a capo, è l'unica che non sta su una riga sola. */
   .tabella-turni .col-totale {
     display: table-cell;
-    width: 7%;
+    width: 9%;
     text-align: center;
+    white-space: normal;
   }
 
   .tabella-turni td.col-totale {

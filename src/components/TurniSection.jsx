@@ -424,7 +424,7 @@ export default function TurniSection({
                     );
                   })}
                   {/* solo sul foglio stampato: quanti giorni lavora ognuno */}
-                  <th className="col-totale">Giorni</th>
+                  <th className="col-totale">Giorni lavorati</th>
                 </tr>
               </thead>
 
