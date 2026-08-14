@@ -31,6 +31,17 @@ export default function TabellaMeseStampa({
   const leggiTurno = creaLettoreTurni(settimane);
   const leggiMansione = creaLettoreMansioni(mansioniSettimane);
 
+  /**
+   * I giorni che una persona lavora davvero nel mese: fuori dalle
+   * chiusure, fuori dalle sue ferie e con un turno di lavoro.
+   */
+  const giorniLavorati = (dip) =>
+    giorni.filter(data =>
+      !eChiusoIlGiorno(aperture, chiaveGiorno(data)) &&
+      !(ferie[dip.id] || []).includes(data) &&
+      eLavorativo(leggiTurno(dip.id, data))
+    ).length;
+
   return (
     <table className="tabella tabella-mese">
       <thead>
@@ -95,6 +106,16 @@ export default function TabellaMeseStampa({
           );
         })}
       </tbody>
+
+      {/* in fondo al mese: quanti giorni ha lavorato ognuno */}
+      <tfoot>
+        <tr className="riga-totali">
+          <th scope="row" className="col-giorno">Totale</th>
+          {persone.map(dip => (
+            <td key={dip.id}>{giorniLavorati(dip)}</td>
+          ))}
+        </tr>
+      </tfoot>
     </table>
   );
 }

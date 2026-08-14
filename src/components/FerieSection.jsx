@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import Avatar from './Avatar';
+import MeseFerie from './MeseFerie';
 import DatePicker from './DatePicker';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
 import { classeReparto, repartoDi, stileMansione } from '../costanti';
 import {
+  aData,
+  aIso,
   giorniDelPeriodo,
   raggruppaInPeriodi,
   etichettaPeriodo,
@@ -13,9 +16,23 @@ import {
   annoCorrente
 } from '../date';
 
+/** Il primo del mese in cui cade una data: è la chiave del calendario. */
+const primoDelMese = (d) => aIso(new Date(d.getFullYear(), d.getMonth(), 1));
+
+const spostaMese = (iso, delta) => {
+  const d = aData(iso);
+  return primoDelMese(new Date(d.getFullYear(), d.getMonth() + delta, 1));
+};
+
 export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusura, avvisa }) {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
-  const [anno, setAnno] = useState(annoCorrente);
+  /**
+   * Il mese mostrato dal calendario in fondo, da cui viene anche l'anno
+   * dei conteggi qui sopra: tenendo un dato solo la scheda non può
+   * ritrovarsi a dire due cose diverse.
+   */
+  const [meseCal, setMeseCal] = useState(() => primoDelMese(new Date()));
+  const anno = Number(meseCal.slice(0, 4));
   const [dal, setDal] = useState('');
   const [al, setAl] = useState('');
   const [chiediConferma, setChiediConferma] = useState(false);
@@ -60,12 +77,12 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
 
     setFerie({ ...ferie, [selectedDipendente]: uniti });
 
-    // Le ferie si possono segnare in qualunque anno, ma la pagina ne mostra
-    // uno alla volta: se il periodo è di un altro anno ci si sposta sopra,
-    // altrimenti i giorni appena inseriti sembrerebbero spariti.
+    // Le ferie si possono segnare in qualunque mese, ma la pagina ne mostra
+    // uno alla volta: ci si sposta su quello appena inserito, altrimenti i
+    // giorni sembrerebbero spariti. Del salto di anno conviene avvisare.
     const annoDelPeriodo = Number(dal.slice(0, 4));
+    setMeseCal(primoDelMese(aData(dal)));
     if (annoDelPeriodo !== anno) {
-      setAnno(annoDelPeriodo);
       avvisa?.(`Ferie inserite nel ${annoDelPeriodo}: ti ho spostato su quell'anno`);
     }
 
@@ -104,11 +121,17 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
   // Il monte ferie si azzera ogni anno: i conti si fanno un anno alla volta
   const giorniSelezionato = ferieDellAnno(ferieDip, anno);
 
+  // cambiare anno lascia il calendario sullo stesso mese, e portare il
+  // calendario oltre dicembre cambia l'anno dei conteggi qui sopra
   const cambiaAnno = (delta) => {
-    setAnno(a => a + delta);
+    setMeseCal(m => spostaMese(m, delta * 12));
     setDal('');
     setAl('');
   };
+
+  const cambiaMeseCal = (delta) => setMeseCal(m => spostaMese(m, delta));
+
+  const calendarioSuOggi = () => setMeseCal(primoDelMese(new Date()));
 
   return (
     <section className="card">
@@ -303,6 +326,18 @@ export default function FerieSection({ dipendenti, ferie, setFerie, giorniChiusu
               )}
             </div>
           )}
+
+          {/* in fondo alla scheda: il mese, con i nomi di chi è via.
+              Serve a vedere le sovrapposizioni senza aprire una
+              persona alla volta */}
+          <MeseFerie
+            mese={meseCal}
+            onCambiaMese={cambiaMeseCal}
+            suOggi={calendarioSuOggi}
+            dipendenti={dipendenti}
+            ferie={ferie}
+            giorniChiusura={giorniChiusura}
+          />
         </>
       )}
 

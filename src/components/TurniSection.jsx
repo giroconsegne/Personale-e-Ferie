@@ -408,7 +408,7 @@ export default function TurniSection({
                         <span className="giorno-nome">{label}</span>
                         <span className="giorno-data">{dataBreve(dateSettimana[idx])}</span>
                         {daSegnalare && (
-                          <span className={`badge-chiuso ${chiuso ? '' : 'badge-orario'}`}>
+                          <span className={`badge-chiuso ${chiuso ? '' : `badge-orario badge-${apertura}`}`}>
                             {APERTURE.find(a => a.valore === apertura)?.breve}
                           </span>
                         )}
@@ -423,6 +423,8 @@ export default function TurniSection({
                       </th>
                     );
                   })}
+                  {/* solo sul foglio stampato: quanti giorni lavora ognuno */}
+                  <th className="col-totale">Giorni</th>
                 </tr>
               </thead>
 
@@ -430,6 +432,14 @@ export default function TurniSection({
                   {inTabella.map(dip => {
                     const suoiTurni = turniDi(dip.id);
                     const sueFerie = ferie[dip.id] || [];
+
+                    // i giorni che lavora davvero: fuori dalle chiusure,
+                    // fuori dalle sue ferie e con un turno di lavoro
+                    const giorniLavorati = giorni.filter((giorno, idx) =>
+                      !giorniChiusura.includes(giorno) &&
+                      !sueFerie.includes(dateSettimana[idx]) &&
+                      eLavorativo(turnoDelGiorno(suoiTurni, giorno))
+                    ).length;
 
                     return (
                       <tr key={dip.id}>
@@ -498,6 +508,8 @@ export default function TurniSection({
                             </td>
                           );
                         })}
+
+                        <td className="col-totale">{giorniLavorati}</td>
                       </tr>
                     );
                   })}
