@@ -13,19 +13,18 @@ import { creaLettoreMansioni, creaLettoreTurni } from '../turni';
 
 /**
  * Il mese intero su un foglio solo: i giorni in riga, le persone in
- * colonna, raggruppate per mansione. Serve alla stampa del mese; a
- * schermo non compare mai.
+ * colonna, nello stesso ordine in cui stanno nella settimana a schermo.
+ * Serve alla stampa del mese; a schermo non compare mai.
  */
 export default function TabellaMeseStampa({
   mese,
-  gruppi,
+  persone,
   settimane,
   mansioniSettimane,
   ferie,
   aperture
 }) {
   const giorni = giorniDelMese(mese);
-  const persone = gruppi.flatMap(g => g.membri);
   const leggiTurno = creaLettoreTurni(settimane);
   const leggiMansione = creaLettoreMansioni(mansioniSettimane);
 
@@ -42,8 +41,8 @@ export default function TabellaMeseStampa({
 
   return (
     <table className="tabella tabella-mese">
-      {/* le persone restano in ordine di mansione, ma sul foglio la riga
-          delle mansioni non si scrive: ruba spazio e i nomi bastano */}
+      {/* sul foglio la riga delle mansioni non si scrive: ruba spazio
+          e i nomi bastano */}
       <thead>
         <tr>
           <th className="col-giorno">Giorno</th>

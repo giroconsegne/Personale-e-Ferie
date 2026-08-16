@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Avatar from './Avatar';
 import Select from './Select';
 import ScrollArea from './ScrollArea';
@@ -47,6 +47,40 @@ const comeOpzione = (t) => ({
 // Riposo e "non previsto" si possono sempre scegliere
 const SENZA_LAVORO = TURNI.filter(t => !eLavorativo(t.valore)).map(comeOpzione);
 
+/* ---------- l'ordine dei nomi, deciso trascinandoli ---------- */
+
+// Quanto va tenuto premuto un nome prima che si possa spostare.
+const ATTESA_TRASCINAMENTO = 600;
+
+// Oltre questo movimento la pressione non è più "tenere premuto":
+// è il dito che sta facendo scorrere la tabella.
+const MOVIMENTO_MASSIMO = 10;
+
+/**
+ * Le persone nell'ordine scelto a mano. Chi non compare nell'elenco
+ * (assunto dopo l'ultimo trascinamento) finisce in fondo, mantenendo
+ * l'ordine di partenza: `sort` in JavaScript non scambia i pari merito.
+ */
+function ordinaPersone(persone, ordine) {
+  if (!ordine?.length) return persone;
+
+  const posto = new Map(ordine.map((id, i) => [id, i]));
+  const dove = (dip) => (posto.has(dip.id) ? posto.get(dip.id) : Number.MAX_SAFE_INTEGER);
+  return [...persone].sort((a, b) => dove(a) - dove(b));
+}
+
+/** L'elenco di id con `id` tolto dal suo posto e rimesso dov'era `bersaglio`. */
+function spostaId(elenco, id, bersaglio) {
+  const senza = elenco.filter(x => x !== id);
+  const dove = senza.indexOf(bersaglio);
+  if (dove === -1) return elenco;
+
+  // scendendo si passa sotto la riga scavalcata, salendo ci si mette sopra
+  const sotto = elenco.indexOf(id) < elenco.indexOf(bersaglio);
+  senza.splice(sotto ? dove + 1 : dove, 0, id);
+  return senza;
+}
+
 export default function TurniSection({
   dipendenti,
   settimane,
@@ -54,6 +88,8 @@ export default function TurniSection({
   mansioniSettimane,
   setMansioniSettimane,
   ferie,
+  ordine,
+  setOrdine,
   giorni,
   giorniLabel,
   giorniChiusura,
@@ -90,6 +126,23 @@ export default function TurniSection({
   // null = niente stampa in corso; 'settimana' o 'mese' = cosa mandare sul foglio
   const [scegliStampa, setScegliStampa] = useState(false);
   const [stampa, setStampa] = useState(null);
+
+  // Trascinamento dei nomi: chi si sta spostando e l'ordine provvisorio
+  const [trascinato, setTrascinato] = useState(null);
+  const [bozza, setBozza] = useState(null);
+  // chi è tenuto premuto ma non si è ancora staccato: serve all'animazione
+  // che accompagna l'attesa
+  const [inAttesa, setInAttesa] = useState(null);
+  // le righe a schermo, per capire su quale si trova il dito
+  const righe = useRef(new Map());
+  const corpoTabella = useRef(null);
+  const attesa = useRef(null);
+  const pressione = useRef(null);
+  // ultima altezza toccata dal dito e verso in cui sta andando
+  const ultimaY = useRef(0);
+  const versoIlBasso = useRef(true);
+  // dov'era ogni riga prima dell'ultimo scambio, per animarne lo spostamento
+  const posizioni = useRef(new Map());
 
   // memorizzata: entra nel calcolo degli ammanchi, che non deve rifarsi a ogni render
   const dateSettimana = useMemo(() => giorniDellaSettimana(lunedi), [lunedi]);
@@ -258,17 +311,191 @@ export default function TurniSection({
   const fuoriElenco = [...new Set(dipendenti.map(d => repartoDi(d)))]
     .filter(m => !mansioni.includes(m));
 
-  // Raggruppati per mansione: servono così al foglio del mese
-  const gruppi = [...mansioni, ...fuoriElenco]
-    .map(reparto => ({
-      reparto,
-      membri: dipendenti.filter(d => repartoDi(d) === reparto)
-    }))
-    .filter(g => g.membri.length > 0);
+  // L'ordine di partenza, quello di chi non ha mai spostato niente:
+  // raggruppati per mansione, che è come stavano da sempre.
+  const perMansione = [...mansioni, ...fuoriElenco]
+    .flatMap(reparto => dipendenti.filter(d => repartoDi(d) === reparto));
 
-  // In tabella invece i nomi vanno di fila: la mansione si legge già
-  // sotto ogni turno, e le righe di intestazione rubavano solo spazio.
-  const inTabella = gruppi.flatMap(g => g.membri);
+  // In tabella i nomi vanno di fila: la mansione si legge già sotto ogni
+  // turno, e le righe di intestazione rubavano solo spazio.
+  // Comanda l'ordine deciso trascinando i nomi; chi non è ancora stato
+  // spostato (assunto dopo) resta in coda com'era, per mansione.
+  const secondoOrdine = ordinaPersone(perMansione, ordine);
+
+  // Durante il trascinamento comanda la bozza: le righe si riordinano
+  // sotto il dito, e solo al rilascio l'ordine viene salvato.
+  const inTabella = bozza
+    ? bozza.map(id => secondoOrdine.find(d => d.id === id)).filter(Boolean)
+    : secondoOrdine;
+
+  /* ---------- spostare i nomi tenendoli premuti ---------- */
+
+  const fermaAttesa = () => {
+    clearTimeout(attesa.current);
+    attesa.current = null;
+    setInAttesa(null);
+  };
+
+  /** Dove si trova adesso ogni riga: il "prima" da cui parte l'animazione. */
+  const segnaPosizioni = () => {
+    posizioni.current = new Map();
+    righe.current.forEach((riga, id) => {
+      if (riga) posizioni.current.set(id, riga.getBoundingClientRect().top);
+    });
+  };
+
+  const senzaAnimazione = (riga) => {
+    riga.style.transition = '';
+    riga.style.transform = '';
+  };
+
+  /**
+   * Si tiene premuto un nome: se il dito resta fermo per il tempo giusto
+   * la riga si stacca e si può spostare. Se invece si muove prima, era
+   * la tabella che si voleva far scorrere e non succede niente.
+   */
+  const iniziaPressione = (e, dipId) => {
+    // i pulsanti dentro la casella (invia i turni) restano cliccabili
+    if (e.target.closest('button')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    const elemento = e.currentTarget;
+    const pointerId = e.pointerId;
+    pressione.current = { x: e.clientX, y: e.clientY };
+    setInAttesa(dipId);
+
+    attesa.current = setTimeout(() => {
+      attesa.current = null;
+      setInAttesa(null);
+      try { elemento.setPointerCapture(pointerId); } catch { /* già rilasciato */ }
+      ultimaY.current = pressione.current.y;
+      versoIlBasso.current = true;
+      setTrascinato(dipId);
+      setBozza(inTabella.map(d => d.id));
+      navigator.vibrate?.(25);
+    }, ATTESA_TRASCINAMENTO);
+  };
+
+  /**
+   * La riga con cui scambiare il posto, se il dito è arrivato abbastanza
+   * avanti. Sfiorare il bordo di una riga non basta: bisogna averne
+   * passato la metà, nel verso in cui ci si sta muovendo. Senza questa
+   * regola, appena avvenuto lo scambio il dito si ritrova sopra la riga
+   * di prima e le due si rincorrono, ballando avanti e indietro.
+   */
+  const rigaSotto = (y, giu) => {
+    const corpo = corpoTabella.current;
+    if (!corpo) return null;
+
+    // Le righe vanno cercate dove le mette l'impaginazione, non dove si
+    // vedono: mentre scivolano al posto nuovo quello che si vede è
+    // ancora a metà strada, e due righe sembrano occupare lo stesso
+    // spazio. Con offsetTop lo scivolamento non conta.
+    const origine = corpo.getBoundingClientRect().top - corpo.offsetTop;
+
+    for (const [id, riga] of righe.current) {
+      if (!riga) continue;
+
+      const alto = origine + riga.offsetTop;
+      const altezza = riga.offsetHeight;
+      if (y < alto || y > alto + altezza) continue;
+
+      const meta = alto + altezza / 2;
+      if (giu ? y < meta : y > meta) return null;
+      return id;
+    }
+    return null;
+  };
+
+  const muoviPressione = (e) => {
+    if (attesa.current) {
+      const p = pressione.current;
+      const quanto = Math.hypot(e.clientX - p.x, e.clientY - p.y);
+      if (quanto > MOVIMENTO_MASSIMO) fermaAttesa();
+      return;
+    }
+
+    if (!trascinato) return;
+
+    // fermandosi si tiene buono l'ultimo verso: non serve un nuovo scambio
+    if (e.clientY !== ultimaY.current) {
+      versoIlBasso.current = e.clientY > ultimaY.current;
+      ultimaY.current = e.clientY;
+    }
+
+    const sopra = rigaSotto(e.clientY, versoIlBasso.current);
+    if (!sopra || sopra === trascinato) return;
+
+    segnaPosizioni();
+    setBozza(prima => spostaId(prima, trascinato, sopra));
+  };
+
+  /** Al rilascio l'ordine provvisorio diventa quello buono. */
+  const finiscePressione = () => {
+    fermaAttesa();
+    if (trascinato && bozza) setOrdine(bozza);
+    righe.current.forEach(riga => { if (riga) senzaAnimazione(riga); });
+    posizioni.current = new Map();
+    setTrascinato(null);
+    setBozza(null);
+  };
+
+  /**
+   * Le righe scavalcate non devono saltare da un posto all'altro: le
+   * rimetto dov'erano un istante prima e le lascio scivolare al nuovo
+   * posto. Va fatto prima che lo schermo si aggiorni, quindi in
+   * useLayoutEffect e non nel solito useEffect.
+   */
+  useLayoutEffect(() => {
+    if (!bozza || posizioni.current.size === 0) return;
+
+    const erano = posizioni.current;
+    posizioni.current = new Map();
+
+    const daAnimare = [];
+    righe.current.forEach((riga, id) => {
+      if (!riga || id === trascinato) return;
+
+      const era = erano.get(id);
+      if (era === undefined) return;
+
+      // prima si toglie lo scivolamento ancora in corso, altrimenti si
+      // misurerebbe una posizione di passaggio invece di quella nuova
+      riga.style.transition = 'none';
+      riga.style.transform = '';
+
+      const salto = era - riga.getBoundingClientRect().top;
+      if (!salto) {
+        riga.style.transition = '';
+        return;
+      }
+
+      riga.style.transform = `translateY(${salto}px)`;
+      daAnimare.push(riga);
+    });
+
+    if (daAnimare.length === 0) return;
+
+    // il fotogramma dopo si toglie tutto: da lì parte la scivolata
+    const prossimo = requestAnimationFrame(() => daAnimare.forEach(senzaAnimazione));
+    return () => cancelAnimationFrame(prossimo);
+  }, [bozza, trascinato]);
+
+  /**
+   * Mentre si sposta una riga il dito non deve far scorrere la pagina.
+   * Va fatto con un ascoltatore "non passivo", l'unico a cui il browser
+   * dia retta quando gli si chiede di non scorrere.
+   */
+  useEffect(() => {
+    if (!trascinato) return;
+
+    const blocca = (e) => e.preventDefault();
+    document.addEventListener('touchmove', blocca, { passive: false });
+    return () => document.removeEventListener('touchmove', blocca);
+  }, [trascinato]);
+
+  // se la sezione sparisce mentre si tiene premuto, il tempo va fermato
+  useEffect(() => () => clearTimeout(attesa.current), []);
 
   /* ---------- stampa ---------- */
 
@@ -428,7 +655,7 @@ export default function TurniSection({
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody ref={corpoTabella}>
                   {inTabella.map(dip => {
                     const suoiTurni = turniDi(dip.id);
                     const sueFerie = ferie[dip.id] || [];
@@ -442,11 +669,45 @@ export default function TurniSection({
                     ).length;
 
                     return (
-                      <tr key={dip.id}>
-                        <td className="col-nome">
+                      <tr
+                        key={dip.id}
+                        ref={(el) => {
+                          if (el) righe.current.set(dip.id, el);
+                          else righe.current.delete(dip.id);
+                        }}
+                        className={
+                          trascinato === dip.id ? 'riga-trascinata'
+                            : inAttesa === dip.id ? 'riga-in-attesa'
+                              : ''
+                        }
+                        // la durata dell'animazione è la stessa attesa del
+                        // codice: così non possono scollarsi fra loro
+                        style={inAttesa === dip.id
+                          ? { '--attesa': `${ATTESA_TRASCINAMENTO}ms` }
+                          : undefined}
+                      >
+                        <td
+                          className="col-nome nome-spostabile"
+                          onPointerDown={(e) => iniziaPressione(e, dip.id)}
+                          onPointerMove={muoviPressione}
+                          onPointerUp={finiscePressione}
+                          onPointerCancel={finiscePressione}
+                          onContextMenu={(e) => { if (trascinato) e.preventDefault(); }}
+                          title="Tienilo premuto per spostarlo"
+                        >
                           <div className="persona">
                             <Avatar nome={dip.nome} />
                             <span className="persona-nome">{dip.nome}</span>
+                            {/* quanti giorni lavora in settimana, accanto al nome:
+                                sul foglio lo dice già la colonna in fondo */}
+                            <span
+                              className="conta-giorni"
+                              title={giorniLavorati === 1
+                                ? '1 giorno lavorato questa settimana'
+                                : `${giorniLavorati} giorni lavorati questa settimana`}
+                            >
+                              {giorniLavorati}
+                            </span>
                             <button
                               className="icon-btn btn-invia"
                               onClick={() => invia(dip)}
@@ -530,7 +791,7 @@ export default function TurniSection({
 
           <TabellaMeseStampa
             mese={lunedi}
-            gruppi={gruppi}
+            persone={secondoOrdine}
             settimane={settimane}
             mansioniSettimane={mansioniSettimane}
             ferie={ferie}

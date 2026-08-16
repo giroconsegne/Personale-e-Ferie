@@ -20,6 +20,9 @@ const localeVuoto = ({ id, nome }) => ({
   // la mansione scelta giorno per giorno, dove non vale quella fissa
   mansioniSettimane: {},
   ferie: {},
+  // l'ordine delle righe nei turni, deciso trascinando i nomi: elenco di
+  // id. Vuoto vuol dire "come viene", cioè raggruppati per mansione.
+  ordine: [],
   aperture: {},
   // quante persone servono come minimo, per mansione e giorno della settimana
   minimi: {},

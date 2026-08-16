@@ -2762,6 +2762,117 @@ h1, h2, h3 {
 }
 
 /* invio dei turni alla singola persona */
+/* La casella del nome si tiene premuta per spostare la riga: niente
+   testo selezionato e niente menu del tocco lungo, che si metterebbero
+   in mezzo proprio mentre si sta trascinando. */
+.nome-spostabile {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Mentre si tiene premuto, la riga si scalda piano piano: è l'unico modo
+   per capire che l'app ha sentito il dito e che sta per succedere
+   qualcosa. La durata arriva da --attesa, che la mette il codice. */
+@keyframes attesa-presa {
+  from {
+    background: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+  to {
+    /* lo stesso colore che avrà da staccata: tenendo premuto la riga
+       si sta già tingendo di quello che sta per diventare */
+    background: var(--brand-chiaro);
+    box-shadow: inset 3px 0 0 var(--brand);
+  }
+}
+
+.riga-in-attesa > td {
+  animation: attesa-presa var(--attesa, 600ms) ease-out forwards;
+}
+
+/* Lo scatto con cui la riga si stacca: i bordi sopra e sotto si
+   ingrossano nel colore dell'app e l'ombra si allarga di colpo, poi si
+   posa. Come se la riga si fosse alzata dal foglio.
+
+   I bordi sono disegnati **dentro** la riga (inset) e non con `border`:
+   un bordo vero la farebbe crescere di sei pixel, e una riga che cresce
+   sposta i confini con le vicine proprio mentre la si trascina sopra.
+   Era una delle cose che facevano ballare i nomi. */
+@keyframes presa {
+  from {
+    box-shadow:
+      inset 0 1px 0 var(--brand),
+      inset 0 -1px 0 var(--brand),
+      0 0 0 rgb(0 0 0 / 0);
+  }
+
+  55% {
+    box-shadow:
+      inset 0 4px 0 var(--brand),
+      inset 0 -4px 0 var(--brand),
+      0 12px 26px rgb(0 0 0 / 0.2);
+  }
+
+  to {
+    box-shadow:
+      inset 0 3px 0 var(--brand),
+      inset 0 -3px 0 var(--brand),
+      0 6px 18px rgb(0 0 0 / 0.14);
+  }
+}
+
+.riga-trascinata .nome-spostabile { cursor: grabbing; }
+
+.riga-trascinata > td {
+  background: var(--brand-chiaro);
+  position: relative;
+  z-index: 2;
+  animation: presa 240ms cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+/* Le righe scavalcate scivolano al posto nuovo invece di saltarci.
+   Il salto di partenza glielo dà il codice, qui c'è solo il tempo. */
+.tabella-turni tbody tr {
+  transition: transform 0.18s ease;
+}
+
+/* Chi ha chiesto meno movimento tiene i colori e perde le scivolate:
+   il colore è quello che dice cosa sta succedendo, e resta. */
+@media (prefers-reduced-motion: reduce) {
+  .tabella-turni tbody tr { transition: none; }
+
+  /* bordi e ombra restano, ci arrivano solo senza il guizzo */
+  .riga-trascinata > td {
+    animation: none;
+    box-shadow:
+      inset 0 3px 0 var(--brand),
+      inset 0 -3px 0 var(--brand),
+      0 6px 18px rgb(0 0 0 / 0.14);
+  }
+
+  .riga-in-attesa > td { animation-timing-function: step-end; }
+}
+
+/* accanto al nome, quanti giorni lavora in settimana: un numero piccolo
+   e spento, che si legge di sfuggita senza rubare la scena al nome */
+.conta-giorni {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--testo-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
 .btn-invia {
   width: 28px;
   height: 28px;
@@ -3478,6 +3589,10 @@ tr:hover .btn-invia,
 
   /* sul foglio contano i nomi, non i tondini colorati */
   .avatar { display: none; }
+
+  /* il conteggio accanto al nome è roba da schermo:
+     sul foglio c'è già la colonna «Giorni lavorati» */
+  .conta-giorni { display: none; }
 
   .turno-ferie,
   .turno-chiuso {

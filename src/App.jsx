@@ -29,6 +29,7 @@ const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 // Un vuoto sempre uguale a se stesso: usarlo come ripiego evita di
 // creare un oggetto nuovo a ogni render, che farebbe ricalcolare tutto
 const NIENTE = {};
+const VUOTO = [];
 
 // La pizzeria scelta resta su questo dispositivo: ognuno riapre la sua
 const CHIAVE_SCELTA = 'pizzeriaLocaleScelto';
@@ -80,6 +81,8 @@ function App() {
   const { dipendenti, settimane, ferie, aperture } = locale;
   const mansioniSettimane = locale.mansioniSettimane || NIENTE;
   const minimi = locale.minimi || NIENTE;
+  // l'ordine dei nomi nei turni, se è stato deciso trascinandoli
+  const ordine = locale.ordine || VUOTO;
 
   // Le mansioni di questa pizzeria: quelle di partenza che non sono state
   // tolte, più quelle aggiunte a mano
@@ -105,6 +108,7 @@ function App() {
   const setSettimane = (v) => modificaLocale({ settimane: v });
   const setMansioniSettimane = (v) => modificaLocale({ mansioniSettimane: v });
   const setFerie = (v) => modificaLocale({ ferie: v });
+  const setOrdine = (v) => modificaLocale({ ordine: v });
 
   const cambiaPizzeria = (id) => {
     setIdLocale(id);
@@ -193,7 +197,8 @@ function App() {
     setShowAddDrawer(false);
   };
 
-  // Elimina dipendente: con lui se ne vanno turni, mansioni del giorno e ferie
+  // Elimina dipendente: con lui se ne vanno turni, mansioni del giorno,
+  // ferie e il posto che occupava nell'ordine dei turni
   const eliminaDipendente = (id) => {
     const senzaLaPersona = (perSettimana) => {
       const ripulito = {};
@@ -212,7 +217,8 @@ function App() {
       dipendenti: dipendenti.filter(d => d.id !== id),
       settimane: senzaLaPersona(settimane),
       mansioniSettimane: senzaLaPersona(mansioniSettimane),
-      ferie: nuoveFerie
+      ferie: nuoveFerie,
+      ordine: ordine.filter(x => x !== id)
     });
   };
 
@@ -459,6 +465,8 @@ function App() {
               mansioniSettimane={mansioniSettimane}
               setMansioniSettimane={setMansioniSettimane}
               ferie={ferie}
+              ordine={ordine}
+              setOrdine={setOrdine}
               giorni={GIORNI}
               giorniLabel={GIORNI_LABEL}
               giorniChiusura={giorniChiusura}
