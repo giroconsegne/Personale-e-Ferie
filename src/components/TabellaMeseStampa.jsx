@@ -39,9 +39,15 @@ export default function TabellaMeseStampa({
       eLavorativo(leggiTurno(dip.id, data))
     ).length;
 
-  // una volta sola: servono sia in fondo a ogni colonna sia sommati
+  // una volta sola: la stessa cifra sta in fondo a ogni colonna
   const lavoratiPerPersona = persone.map(giorniLavorati);
-  const totaleLocale = lavoratiPerPersona.reduce((somma, n) => somma + n, 0);
+
+  // i giorni della pizzeria, non delle persone: quanti ne ha il mese e
+  // quanti se ne resta aperti
+  const giorniChiusi = giorni.filter(data =>
+    eChiusoIlGiorno(aperture, chiaveGiorno(data))
+  ).length;
+  const giorniAperti = giorni.length - giorniChiusi;
 
   return (
     <table className="tabella tabella-mese">
@@ -102,7 +108,7 @@ export default function TabellaMeseStampa({
       </tbody>
 
       {/* in fondo al mese: quanti giorni ha lavorato ognuno, e sotto
-          quanti ne ha lavorati la pizzeria in tutto */}
+          i giorni della pizzeria (quelli del mese e quelli di apertura) */}
       <tfoot>
         <tr className="riga-totali">
           <th scope="row" className="col-giorno">Totale</th>
@@ -112,8 +118,11 @@ export default function TabellaMeseStampa({
         </tr>
 
         <tr className="riga-totale-locale">
-          <th scope="row" className="col-giorno">Totale locale</th>
-          <td colSpan={persone.length}>{totaleLocale} giorni lavorati in tutto</td>
+          <th scope="row" className="col-giorno">Apertura</th>
+          <td colSpan={persone.length}>
+            {giorni.length} giorni nel mese, {giorniAperti} di apertura
+            {giorniChiusi > 0 && ` e ${giorniChiusi} di chiusura`}
+          </td>
         </tr>
       </tfoot>
     </table>
