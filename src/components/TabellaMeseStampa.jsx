@@ -39,6 +39,10 @@ export default function TabellaMeseStampa({
       eLavorativo(leggiTurno(dip.id, data))
     ).length;
 
+  // una volta sola: servono sia in fondo a ogni colonna sia sommati
+  const lavoratiPerPersona = persone.map(giorniLavorati);
+  const totaleLocale = lavoratiPerPersona.reduce((somma, n) => somma + n, 0);
+
   return (
     <table className="tabella tabella-mese">
       {/* sul foglio la riga delle mansioni non si scrive: ruba spazio
@@ -97,13 +101,19 @@ export default function TabellaMeseStampa({
         })}
       </tbody>
 
-      {/* in fondo al mese: quanti giorni ha lavorato ognuno */}
+      {/* in fondo al mese: quanti giorni ha lavorato ognuno, e sotto
+          quanti ne ha lavorati la pizzeria in tutto */}
       <tfoot>
         <tr className="riga-totali">
           <th scope="row" className="col-giorno">Totale</th>
-          {persone.map(dip => (
-            <td key={dip.id}>{giorniLavorati(dip)}</td>
+          {persone.map((dip, i) => (
+            <td key={dip.id}>{lavoratiPerPersona[i]}</td>
           ))}
+        </tr>
+
+        <tr className="riga-totale-locale">
+          <th scope="row" className="col-giorno">Totale locale</th>
+          <td colSpan={persone.length}>{totaleLocale} giorni lavorati in tutto</td>
         </tr>
       </tfoot>
     </table>

@@ -3439,6 +3439,18 @@ tr:hover .btn-invia,
     font-weight: 700;
   }
 
+  /* sotto ai totali di ognuno: la somma di tutta la pizzeria, senza
+     riga di separazione perché fa corpo con quella sopra */
+  .tabella-mese .riga-totale-locale td {
+    text-align: left;
+    font-size: 8.5pt;
+    font-weight: 700;
+  }
+
+  .tabella-mese .riga-totale-locale .col-giorno {
+    font-weight: 700;
+  }
+
   .tabella-mese .cella-chiusa {
     color: var(--testo-3);
     font-size: 8pt;
