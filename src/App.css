@@ -60,6 +60,9 @@
   --ombra-brand: 0 4px 14px rgba(217, 64, 47, 0.28);
 
   --sidebar-w: 272px;
+  --topbar-h: 62px;
+  /* spazio sotto la card: il bordo più il fondo di .container */
+  --sotto-card: 65px;
 }
 
 /* ============================================================
@@ -398,7 +401,7 @@ h1, h2, h3 {
   align-items: center;
   gap: 12px;
   padding: 0 26px;
-  height: 62px;
+  height: var(--topbar-h);
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -608,6 +611,15 @@ h1, h2, h3 {
   opacity: 1;
 }
 
+/* la tabella dei turni scorre anche in giù dentro il suo riquadro: è così
+   che la riga dei giorni può restare agganciata in alto (vedi .tabella-turni
+   thead th). L'altezza lascia fuori la barra in alto e il bordo della card. */
+.scroll-area-turni .scroll-area-inner {
+  overflow-y: auto;
+  max-height: calc(100vh - var(--topbar-h) - var(--sotto-card));
+  max-height: calc(100dvh - var(--topbar-h) - var(--sotto-card));
+}
+
 /* barra di scorrimento sottile e discreta */
 .scroll-area-inner {
   scrollbar-width: thin;
@@ -616,6 +628,7 @@ h1, h2, h3 {
 
 .scroll-area-inner::-webkit-scrollbar {
   height: 12px;
+  width: 12px;
 }
 
 .scroll-area-inner::-webkit-scrollbar-track {
@@ -746,6 +759,18 @@ h1, h2, h3 {
 
 .tabella tbody tr.riga-attiva .col-nome {
   background: var(--brand-chiaro);
+}
+
+/* riga dei giorni sempre visibile mentre si scorre in giù, come i nomi
+   restano visibili mentre si scorre di lato */
+.tabella-turni thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.tabella-turni thead th.col-nome {
+  z-index: 5;
 }
 
 .persona {
@@ -3079,6 +3104,8 @@ tr:hover .btn-invia,
 }
 
 @media (max-width: 768px) {
+  :root { --topbar-h: 56px; --sotto-card: 49px; }
+
   body { font-size: 14.5px; }
 
   .main-wrapper { margin-left: 0; }
@@ -3103,7 +3130,7 @@ tr:hover .btn-invia,
   }
 
   .topbar {
-    height: 56px;
+    height: var(--topbar-h);
     padding: 0 12px;
     gap: 8px;
   }
@@ -3551,6 +3578,21 @@ tr:hover .btn-invia,
   /* niente scorrimento orizzontale: la tabella sta tutta nel foglio */
   .scroll-area-inner {
     overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .tabella-turni thead th {
+    position: static;
+  }
+
+  /* La settimana deve stare in una pagina sola: se i dipendenti sono
+     tanti, TurniSection calcola di quanto rimpicciolire e lo scrive qui.
+     Ci vuole `zoom` e non `transform`: solo `zoom` cambia davvero
+     l'ingombro, altrimenti il browser aggiunge la pagina in più lo stesso.
+     La tabella rimpicciolita lascia un po' di bianco a destra: allargarla
+     per riempirlo la fa sbordare oltre il margine del foglio. */
+  .sezione-turni {
+    zoom: var(--zoom-stampa, 1);
   }
 
   .tabella {

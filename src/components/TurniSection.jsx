@@ -47,6 +47,72 @@ const comeOpzione = (t) => ({
 // Riposo e "non previsto" si possono sempre scegliere
 const SENZA_LAVORO = TURNI.filter(t => !eLavorativo(t.valore)).map(comeOpzione);
 
+/* ---------- il foglio della settimana in una pagina sola ---------- */
+
+// L'A4 orizzontale: 297mm di larghezza e, in altezza, i 210mm meno il
+// margine che il contenuto si mette da sé (vedi `.container` in @media print).
+const FOGLIO_LARGO = '297mm';
+const FOGLIO_ALTO_MM = 188;
+
+// quanti pixel vale un millimetro per il CSS, sempre e comunque
+const PIXEL_PER_MM = 96 / 25.4;
+
+// Più piccolo di così non si legge: a quel punto meglio due pagine.
+const ZOOM_MINIMO = 0.55;
+
+/** I blocchi @media print del foglio di stile che si riescono a leggere. */
+function regoleDiStampa() {
+  const trovate = [];
+  for (const foglio of document.styleSheets) {
+    let regole;
+    try {
+      regole = foglio.cssRules;
+    } catch {
+      continue; // foglio di stile di un altro sito: non si può leggere
+    }
+    for (const regola of regole) {
+      if (regola.media && /print/.test(regola.conditionText || '')) trovate.push(regola);
+    }
+  }
+  return trovate;
+}
+
+/**
+ * Quanto va rimpicciolita la settimana per stare in una pagina sola:
+ * 1 se ci sta già.
+ *
+ * La tabella a schermo non dice niente di quella sul foglio: caratteri,
+ * spaziature e larghezza sono altri. Quindi si accendono per un attimo le
+ * regole di stampa, si allarga il contenitore quanto il foglio, si misura
+ * e si rimette tutto com'era. Succede tutto di fila, senza mai restituire
+ * il turno al browser: la pagina non fa in tempo a essere ridisegnata,
+ * quindi non si vede nessun lampo.
+ */
+function zoomPerUnaPagina(sezione) {
+  // dove `zoom` non esiste il foglio resta com'era: meglio due pagine
+  // che una tabella tagliata a metà
+  if (!window.CSS?.supports?.('zoom', '0.9')) return 1;
+
+  const contenitore = sezione.closest('.container');
+  const regole = regoleDiStampa();
+  if (!contenitore || !regole.length) return 1;
+
+  const condizioni = regole.map(r => r.conditionText);
+  const larghezzaPrima = contenitore.style.width;
+
+  regole.forEach(r => { r.media.mediaText = 'all'; });
+  contenitore.style.width = FOGLIO_LARGO;
+
+  const serve = sezione.getBoundingClientRect().height;
+
+  contenitore.style.width = larghezzaPrima;
+  regole.forEach((r, i) => { r.media.mediaText = condizioni[i]; });
+
+  const disponibile = FOGLIO_ALTO_MM * PIXEL_PER_MM;
+  if (!serve || serve <= disponibile) return 1;
+  return Math.max(ZOOM_MINIMO, disponibile / serve);
+}
+
 /* ---------- l'ordine dei nomi, deciso trascinandoli ---------- */
 
 // Quanto va tenuto premuto un nome prima che si possa spostare.
@@ -497,6 +563,9 @@ export default function TurniSection({
   // se la sezione sparisce mentre si tiene premuto, il tempo va fermato
   useEffect(() => () => clearTimeout(attesa.current), []);
 
+  // serve per misurare il foglio prima di stamparlo
+  const sezione = useRef(null);
+
   /* ---------- stampa ---------- */
 
   // Il mese è quello in cui cade il lunedì della settimana mostrata.
@@ -524,6 +593,13 @@ export default function TurniSection({
     const classe = `stampa-${stampa.cosa}`;
     document.body.classList.add(classe);
 
+    // il mese è già fatto apposta per stare in un foglio: è la settimana
+    // che, se i dipendenti sono tanti, sfora di poco sulla pagina dopo
+    const foglio = sezione.current;
+    if (stampa.cosa === 'settimana' && foglio) {
+      foglio.style.setProperty('--zoom-stampa', String(zoomPerUnaPagina(foglio)));
+    }
+
     // la finestra di stampa blocca la pagina, ma dove non lo fa
     // ci pensa "afterprint" a rimettere le cose a posto
     const finito = () => setStampa(null);
@@ -539,6 +615,7 @@ export default function TurniSection({
     return () => {
       window.removeEventListener('afterprint', finito);
       document.body.classList.remove(classe);
+      foglio?.style.removeProperty('--zoom-stampa');
     };
   }, [stampa]);
 
@@ -550,7 +627,7 @@ export default function TurniSection({
   };
 
   return (
-    <section className="card sezione-turni">
+    <section className="card sezione-turni" ref={sezione}>
       <div className="card-head">
         <div>
           <h2>Turni settimanali</h2>
@@ -617,7 +694,7 @@ export default function TurniSection({
             </p>
           )}
 
-          <ScrollArea>
+          <ScrollArea className="scroll-area-turni">
             <table className="tabella tabella-turni">
               <thead>
                 <tr>
