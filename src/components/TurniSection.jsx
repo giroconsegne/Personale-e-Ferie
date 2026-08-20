@@ -60,6 +60,13 @@ const PIXEL_PER_MM = 96 / 25.4;
 // Più piccolo di così non si legge: a quel punto meglio due pagine.
 const ZOOM_MINIMO = 0.55;
 
+// Un filo di aria in fondo al foglio: senza, la tabella finisce esatta
+// sul bordo e un pixel di arrotondamento apre la seconda pagina.
+const ARIA_SOTTO = 6;
+
+// Quante volte si misura e si corregge prima di arrendersi.
+const PASSATE_ZOOM = 4;
+
 /** I blocchi @media print del foglio di stile che si riescono a leggere. */
 function regoleDiStampa() {
   const trovate = [];
@@ -103,14 +110,28 @@ function zoomPerUnaPagina(sezione) {
   regole.forEach(r => { r.media.mediaText = 'all'; });
   contenitore.style.width = FOGLIO_LARGO;
 
-  const serve = sezione.getBoundingClientRect().height;
+  const disponibile = FOGLIO_ALTO_MM * PIXEL_PER_MM - ARIA_SOTTO;
+  let zoom = 1;
 
+  // Rimpicciolire non è una semplice scala: a caratteri più piccoli il
+  // testo si dispone in modo diverso, e la tabella resta un filo più alta
+  // del conto. Bastavano tre pixel per far scivolare l'ultima riga sulla
+  // pagina dopo, quindi si applica il rimpicciolimento, si rimisura e si
+  // corregge finché ci sta davvero.
+  for (let passata = 0; passata < PASSATE_ZOOM; passata++) {
+    const serve = sezione.getBoundingClientRect().height;
+    if (!serve || serve <= disponibile) break;
+
+    zoom = Math.max(ZOOM_MINIMO, zoom * (disponibile / serve));
+    sezione.style.setProperty('--zoom-stampa', String(zoom));
+    if (zoom === ZOOM_MINIMO) break; // più piccolo non si va: meglio due pagine
+  }
+
+  sezione.style.removeProperty('--zoom-stampa'); // lo riscrive chi ha chiamato
   contenitore.style.width = larghezzaPrima;
   regole.forEach((r, i) => { r.media.mediaText = condizioni[i]; });
 
-  const disponibile = FOGLIO_ALTO_MM * PIXEL_PER_MM;
-  if (!serve || serve <= disponibile) return 1;
-  return Math.max(ZOOM_MINIMO, disponibile / serve);
+  return zoom;
 }
 
 /* ---------- l'ordine dei nomi, deciso trascinandoli ---------- */
