@@ -3653,12 +3653,6 @@ tr:hover .btn-invia,
     font-size: 9.5pt;
   }
 
-  /* Sul foglio la mansione si scrive solo dove cambia da quella di sempre:
-     stamparla in ogni casella raddoppierebbe l'altezza della tabella. */
-  .riga-mansione.mansione-fissa {
-    display: none;
-  }
-
   .riga-mansione .select-trigger {
     font-size: 8pt;
     font-weight: 600;
