@@ -972,6 +972,142 @@ h1, h2, h3 {
   gap: 4px;
 }
 
+/* l'orario della casella: discreto, si accende quando è scritto a mano */
+.orario-turno {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 2px 7px;
+  border: 1px dashed var(--border-forte);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--testo-3);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.orario-turno:hover,
+.orario-turno.aperto {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-chiaro);
+}
+
+/* scritto a mano: si deve vedere a colpo d'occhio chi fa orario suo */
+.orario-turno.su-misura {
+  border-style: solid;
+  border-color: var(--avviso);
+  background: var(--avviso-chiaro);
+  color: var(--avviso);
+}
+
+/* Nei giorni con un turno solo la casella è l'orario più questo tasto:
+   acceso vuol dire riposo, spento vuol dire che quel giorno si lavora. */
+.tasto-riposo {
+  align-self: flex-start;
+  padding: 2px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--testo-3);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.tasto-riposo:hover {
+  opacity: 1;
+  background: var(--riposo-bg);
+  color: var(--riposo);
+}
+
+.tasto-riposo.attivo {
+  opacity: 1;
+  background: var(--riposo-bg);
+  color: var(--riposo);
+  border-color: #e2ddd8;
+  font-weight: 700;
+}
+
+/* l'orario di chi quel giorno è a riposo: si vede quale sarebbe,
+   in chiaro, e toccandolo lo si rimette al lavoro */
+.orario-turno.spento {
+  opacity: 0.4;
+  border-style: dotted;
+}
+
+.orario-turno.spento:hover {
+  opacity: 1;
+}
+
+.popup-orario {
+  position: fixed;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--ombra-lg);
+  outline: none;
+  animation: apriLista 0.16s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.campo-orario {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--testo-2);
+}
+
+.campo-orario input {
+  width: 108px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-forte);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--testo);
+  font-size: 13.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.campo-orario input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-chiaro);
+}
+
+.durata-orario {
+  margin: 0;
+  padding-top: 2px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--testo-2);
+}
+
+.durata-orario strong {
+  color: var(--testo);
+}
+
+.btn-torna-normale {
+  width: 100%;
+  font-size: 12px;
+}
+
 .select-mansione {
   min-width: 0;
   padding: 4px 9px;
@@ -2882,6 +3018,75 @@ h1, h2, h3 {
 
 /* accanto al nome, quanti giorni lavora in settimana: un numero piccolo
    e spento, che si legge di sfuggita senza rubare la scena al nome */
+/* Impostazioni: l'orario normale di ogni turno */
+.blocco-orari {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 24px 4px;
+}
+
+.riga-orario-standard {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.riga-orario-standard > .pillola {
+  min-width: 84px;
+  justify-content: center;
+}
+
+.durata-standard {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--testo-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resoconto: le ore del mese */
+.num-ore {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sera);
+  font-variant-numeric: tabular-nums;
+}
+
+/* le ore della settimana, accanto al numero dei giorni */
+/* il totale delle ore, sotto la tabella della settimana */
+.nota-ore {
+  margin: 12px 24px 20px;
+  font-size: 12.5px;
+  color: var(--testo-2);
+}
+
+.nota-ore strong {
+  color: var(--testo);
+  font-variant-numeric: tabular-nums;
+}
+
+.conta-ore {
+  display: inline-grid;
+  place-items: center;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--sera-bg);
+  color: var(--sera);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .conta-giorni {
   display: inline-grid;
   place-items: center;
@@ -3639,6 +3844,32 @@ tr:hover .btn-invia,
     font-weight: 700;
   }
 
+  /* Le colonne se le misura il browser, invece di spartirle a percentuali
+     fisse. Con le percentuali la colonna dei nomi era larga uguale per
+     tutti: a Pomodoro, che ha nomi corti, sprecava 145px che mancavano ai
+     giorni, e la mansione andava a capo sotto l'orario sballando
+     l'incolonnamento. Lasciando decidere al browser ogni colonna prende
+     quello che le serve — il lunedì chiuso, che contiene un trattino, si
+     stringe da solo — e il foglio di Pomodoro passa dall'85% al 94%. */
+  .tabella-turni {
+    table-layout: auto;
+  }
+
+  /* "quanto basta": con table-layout auto una larghezza piccolissima vuol
+     dire "stringiti sul contenuto", e il nome non deve spezzarsi */
+  .tabella-turni .col-nome {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .tabella-turni .col-totale {
+    width: 1%;
+  }
+
+  .riga-mansione .select-trigger {
+    white-space: nowrap;
+  }
+
   .persona-nome { font-size: 10pt; }
 
   /* sul foglio contano i nomi, non i tondini colorati */
@@ -3647,6 +3878,79 @@ tr:hover .btn-invia,
   /* il conteggio accanto al nome è roba da schermo:
      sul foglio c'è già la colonna «Giorni lavorati» */
   .conta-giorni { display: none; }
+
+  /* i totali delle ore sono roba da schermo: sul foglio c'è l'orario
+     casella per casella, che è quello che serve a chi legge il turno */
+  .conta-ore,
+  .nota-ore {
+    display: none !important;
+  }
+
+  /* Sul foglio l'orario prende il posto di «Cena»: l'orario dice già
+     che turno è, scriverli tutti e due sarebbe una riga in più che non
+     ci sta. Dove l'orario non c'è (riposo, non previsto) la scritta del
+     turno resta, altrimenti la casella verrebbe vuota. */
+  .casella-turno.con-orario > .select-trigger {
+    display: none;
+  }
+
+  .orario-turno {
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 9.5pt;
+    font-weight: 700;
+  }
+
+  /* l'orologino serve a far capire che si può toccare: sul foglio no */
+  .icona-orario {
+    display: none;
+  }
+
+  /* Sul foglio resta solo quello che vale: l'orario di chi lavora, la
+     scritta Riposo di chi riposa. Il tasto spento e l'orario in chiaro
+     sono modi per toccare, e sulla carta non si tocca niente. */
+  .tasto-riposo:not(.attivo),
+  .orario-turno.spento {
+    display: none;
+  }
+
+  .tasto-riposo.attivo {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--riposo);
+    font-size: 9.5pt;
+    font-weight: 700;
+  }
+
+  /* il colore del turno resta, così pranzo e cena si distinguono a occhio */
+  .orario-turno.turno-mattina { color: var(--mattina); }
+  .orario-turno.turno-sera { color: var(--sera); }
+
+  /* Orario e mansione sulla stessa riga. Incolonnati raddoppiano
+     l'altezza di ogni riga, e su diciassette persone vuol dire stampare
+     tutto molto più piccolo per far stare il foglio in una pagina:
+     affiancati si passa dal 66% all'86%, cioè caratteri di un terzo
+     più grandi. A schermo restano incolonnati, che si legge meglio. */
+  .casella-turno.con-orario {
+    flex-direction: row;
+    /* non si separano: le colonne ormai hanno lo spazio per tenerli
+       sulla stessa riga, e una mansione andata a capo sballava
+       l'incolonnamento di tutta la colonna */
+    flex-wrap: nowrap;
+    align-items: baseline;
+    /* a sinistra come le intestazioni: centrato, l'orario partiva da un
+       punto diverso in ogni casella a seconda di quanto era lunga la
+       mansione, e la colonna sembrava storta. Le cifre sono tutte larghe
+       uguale, quindi così cadono in riga anche le mansioni. */
+    justify-content: flex-start;
+    gap: 0 6px;
+  }
+
+  .casella-turno.con-orario .riga-mansione {
+    display: inline-block;
+  }
 
   .turno-ferie,
   .turno-chiuso {
@@ -3672,7 +3976,8 @@ tr:hover .btn-invia,
 
   /* i colori di turni e mansioni si vedono anche sul foglio */
   .pillola,
-  .pill-reparto {
+  .pill-reparto,
+  .orario-turno {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

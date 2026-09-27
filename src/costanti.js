@@ -74,6 +74,16 @@ export const TURNI = [
   { valore: '', etichetta: 'Non previsto', breve: '—', classe: 'turno-vuoto' }
 ];
 
+/**
+ * L'orario normale di entrata e uscita, turno per turno: è quello che
+ * compare sulla casella finché non si scrive qualcosa di diverso.
+ * Ogni pizzeria ha il suo, si cambia dalle Impostazioni.
+ */
+export const ORARI_PREDEFINITI = {
+  Mattina: { inizio: '12:00', fine: '15:00' },
+  Sera: { inizio: '18:30', fine: '23:30' }
+};
+
 // Un giorno di cui non è stato deciso niente è "non previsto"
 export const TURNO_PREDEFINITO = '';
 

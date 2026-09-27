@@ -3,14 +3,21 @@ import Avatar from './Avatar';
 import ScrollArea from './ScrollArea';
 import { classeReparto, repartoDi, stileMansione } from '../costanti';
 import { aIso, conteggiaGiorni } from '../date';
-import { creaLettoreTurni } from '../turni';
+import { creaLettoreMinuti, creaLettoreTurni, oreScritte } from '../turni';
 
 const MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ];
 
-export default function ResocontoSection({ dipendenti, settimane, ferie, giorniChiusura }) {
+export default function ResocontoSection({
+  dipendenti,
+  settimane,
+  orariSettimane,
+  orariPredefiniti,
+  ferie,
+  giorniChiusura
+}) {
   const oggi = new Date();
   const isoOggi = aIso(oggi);
   const [vista, setVista] = useState({ anno: oggi.getFullYear(), mese: oggi.getMonth() });
@@ -23,10 +30,13 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
 
     // ogni giorno va letto dai turni scritti per quella settimana
     const leggiTurno = creaLettoreTurni(settimane);
+    // le ore escono dagli stessi giorni contati qui sopra
+    const leggiMinuti = creaLettoreMinuti(settimane, orariSettimane, orariPredefiniti);
 
     return dipendenti.map(dip => {
       const comuni = {
         turnoDelGiorno: (iso) => leggiTurno(dip.id, iso),
+        minutiDelGiorno: (iso, turno) => leggiMinuti(dip.id, iso, turno),
         ferieDip: ferie[dip.id] || [],
         giorniChiusura,
         oggi: isoOggi
@@ -37,7 +47,7 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
         anno: conteggiaGiorni({ dal: primoDellAnno, al: ultimoDellAnno, ...comuni })
       };
     });
-  }, [dipendenti, settimane, ferie, giorniChiusura, vista, isoOggi]);
+  }, [dipendenti, settimane, orariSettimane, orariPredefiniti, ferie, giorniChiusura, vista, isoOggi]);
 
   const totali = useMemo(
     () =>
@@ -45,6 +55,8 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
         (acc, r) => ({
           lavorati: acc.lavorati + r.mese.lavorati,
           previsti: acc.previsti + r.mese.previsti,
+          minuti: acc.minuti + r.mese.minuti,
+          minutiPrevisti: acc.minutiPrevisti + r.mese.minutiPrevisti,
           mattine: acc.mattine + r.mese.mattine,
           sere: acc.sere + r.mese.sere,
           ferie: acc.ferie + r.mese.ferie,
@@ -52,7 +64,10 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
           annoPrevisti: acc.annoPrevisti + r.anno.previsti,
           annoFerie: acc.annoFerie + r.anno.ferie
         }),
-        { lavorati: 0, previsti: 0, mattine: 0, sere: 0, ferie: 0, annoLavorati: 0, annoPrevisti: 0, annoFerie: 0 }
+        {
+          lavorati: 0, previsti: 0, minuti: 0, minutiPrevisti: 0,
+          mattine: 0, sere: 0, ferie: 0, annoLavorati: 0, annoPrevisti: 0, annoFerie: 0
+        }
       ),
     [righe]
   );
@@ -74,7 +89,7 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
       <div className="card-head">
         <div>
           <h2>Resoconto</h2>
-          <p className="card-sub">Giorni lavorati per persona, nel mese e nell'anno</p>
+          <p className="card-sub">Giorni e ore per persona, nel mese e nell'anno</p>
         </div>
         <div className="navigazione-mese">
           <button className="icon-btn" onClick={() => cambiaMese(-1)} title="Mese precedente">‹</button>
@@ -97,11 +112,12 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
               <thead>
                 <tr className="riga-gruppi">
                   <th className="col-nome" rowSpan={2}>Dipendente</th>
-                  <th colSpan={4} className="gruppo-mese">{MESI[vista.mese]}</th>
+                  <th colSpan={5} className="gruppo-mese">{MESI[vista.mese]}</th>
                   <th colSpan={2} className="gruppo-anno">Anno {vista.anno}</th>
                 </tr>
                 <tr>
                   <th>Lavorati</th>
+                  <th>Ore</th>
                   <th>Pranzi</th>
                   <th>Cene</th>
                   <th>Ferie</th>
@@ -131,6 +147,10 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
                       <span className="num num-neutro">{mese.lavorati}</span>
                       <span className="su-totale">di {mese.previsti}</span>
                     </td>
+                    <td>
+                      <span className="num num-ore">{oreScritte(mese.minuti)}</span>
+                      <span className="su-totale">di {oreScritte(mese.minutiPrevisti)}</span>
+                    </td>
                     <td><span className="conta conta-mattina">{mese.mattine}</span></td>
                     <td><span className="conta conta-sera">{mese.sere}</span></td>
                     <td><span className="num num-usate">{mese.ferie}</span></td>
@@ -149,6 +169,10 @@ export default function ResocontoSection({ dipendenti, settimane, ferie, giorniC
                   <td>
                     <span className="num num-neutro">{totali.lavorati}</span>
                     <span className="su-totale">di {totali.previsti}</span>
+                  </td>
+                  <td>
+                    <span className="num num-ore">{oreScritte(totali.minuti)}</span>
+                    <span className="su-totale">di {oreScritte(totali.minutiPrevisti)}</span>
                   </td>
                   <td><span className="conta conta-mattina">{totali.mattine}</span></td>
                   <td><span className="conta conta-sera">{totali.sere}</span></td>

@@ -4,6 +4,7 @@ import Select from './Select';
 import ScrollArea from './ScrollArea';
 import Conferma from './Conferma';
 import ScegliStampa from './ScegliStampa';
+import OrarioTurno from './OrarioTurno';
 import TabellaMeseStampa from './TabellaMeseStampa';
 import {
   APERTURE,
@@ -30,8 +31,13 @@ import {
 } from '../date';
 import {
   ammanchiDellaSettimana,
+  durataOrario,
   mansioneDelGiorno,
   mansioniDellaSettimana,
+  orariDellaSettimana,
+  orarioDelGiorno,
+  orarioSuMisura,
+  oreScritte,
   settimanaPropria,
   turniDellaSettimana,
   turnoDelGiorno
@@ -60,12 +66,19 @@ const PIXEL_PER_MM = 96 / 25.4;
 // Più piccolo di così non si legge: a quel punto meglio due pagine.
 const ZOOM_MINIMO = 0.55;
 
-// Un filo di aria in fondo al foglio: senza, la tabella finisce esatta
-// sul bordo e un pixel di arrotondamento apre la seconda pagina.
-const ARIA_SOTTO = 6;
+// L'aria da lasciare in fondo al foglio, in pixel.
+//
+// Sei pixel su 794 non bastano: il conto tornava qui e la stampa vera
+// andava lo stesso a due pagine. Un foglio stampato passa per un altro
+// browser, altri caratteri e i margini della finestra di stampa, e ognuno
+// si mangia qualche pixel. Meglio un 5% di pagina buttato via che una
+// riga sola sul foglio dopo: a queste misure vuol dire rimpicciolire di
+// un altro 3 per cento scarso, che a occhio non si vede.
+const ARIA_SOTTO = 64;
 
-// Quante volte si misura e si corregge prima di arrendersi.
-const PASSATE_ZOOM = 4;
+// Quante volte si prova prima di accontentarsi: ogni passata dimezza
+// l'incertezza, sei bastano ad azzeccare l'un per cento.
+const PASSATE_ZOOM = 6;
 
 /** I blocchi @media print del foglio di stile che si riescono a leggere. */
 function regoleDiStampa() {
@@ -111,20 +124,36 @@ function zoomPerUnaPagina(sezione) {
   contenitore.style.width = FOGLIO_LARGO;
 
   const disponibile = FOGLIO_ALTO_MM * PIXEL_PER_MM - ARIA_SOTTO;
+
+  /** Prova un rimpicciolimento e dice se a quella misura il foglio basta. */
+  const ciSta = (quanto) => {
+    if (quanto >= 1) sezione.style.removeProperty('--zoom-stampa');
+    else sezione.style.setProperty('--zoom-stampa', String(quanto));
+
+    const serve = sezione.getBoundingClientRect().height;
+    return Boolean(serve) && serve <= disponibile;
+  };
+
   let zoom = 1;
 
-  // Rimpicciolire non è una semplice scala: a caratteri più piccoli il
-  // testo si dispone in modo diverso, e la tabella resta un filo più alta
-  // del conto. Bastavano tre pixel per far scivolare l'ultima riga sulla
-  // pagina dopo, quindi si applica il rimpicciolimento, si rimisura e si
-  // corregge finché ci sta davvero.
-  for (let passata = 0; passata < PASSATE_ZOOM; passata++) {
-    const serve = sezione.getBoundingClientRect().height;
-    if (!serve || serve <= disponibile) break;
+  // Rimpicciolire non è una semplice scala: a caratteri più piccoli il testo
+  // si dispone in modo diverso, e due righe che diventano una accorciano la
+  // tabella molto più del conto. Andando per tentativi in una direzione sola
+  // si finiva per rimpicciolire assai più del necessario, quindi si cerca:
+  // ogni passata dimezza l'intervallo e tiene il più grande che ci sta.
+  if (!ciSta(1)) {
+    let piuPiccolo = ZOOM_MINIMO;
+    let piuGrande = 1;
 
-    zoom = Math.max(ZOOM_MINIMO, zoom * (disponibile / serve));
-    sezione.style.setProperty('--zoom-stampa', String(zoom));
-    if (zoom === ZOOM_MINIMO) break; // più piccolo non si va: meglio due pagine
+    for (let passata = 0; passata < PASSATE_ZOOM; passata++) {
+      const mezzo = (piuPiccolo + piuGrande) / 2;
+      if (ciSta(mezzo)) piuPiccolo = mezzo;
+      else piuGrande = mezzo;
+    }
+
+    // il più grande fra quelli che ci stanno; se non ci sta nemmeno il
+    // minimo resta il minimo, e pazienza per la seconda pagina
+    zoom = piuPiccolo;
   }
 
   sezione.style.removeProperty('--zoom-stampa'); // lo riscrive chi ha chiamato
@@ -174,6 +203,9 @@ export default function TurniSection({
   setSettimane,
   mansioniSettimane,
   setMansioniSettimane,
+  orariSettimane,
+  setOrariSettimane,
+  orariPredefiniti,
   ferie,
   ordine,
   setOrdine,
@@ -198,6 +230,26 @@ export default function TurniSection({
       .map(v => comeOpzione(TURNI.find(t => t.valore === v))),
     ...SENZA_LAVORO
   ];
+
+  /**
+   * I soli turni di lavoro che quel giorno si possono fare. Dove ce n'è
+   * uno solo — e finché si apre solo a cena sono tutti i giorni — la
+   * scelta Pranzo/Cena non dice niente che l'orario non dica già.
+   */
+  const turnoUnicoDelGiorno = (giorno) => {
+    const possibili = turniDelGiorno(turniDisponibili, aperture, giorno);
+    return possibili.length === 1 ? possibili[0] : null;
+  };
+
+  /**
+   * I turni che in questa settimana si possono davvero fare: se non si
+   * apre mai a pranzo, «Pranzo» nella legenda sarebbe un colore che non
+   * si vede in nessuna casella.
+   */
+  const turniInUso = useMemo(() => {
+    const visti = new Set(giorni.flatMap(g => turniDelGiorno(turniDisponibili, aperture, g)));
+    return TURNI.filter(t => t.valore && (visti.has(t.valore) || t.valore === 'Riposo'));
+  }, [giorni, turniDisponibili, aperture]);
 
   // Le mansioni fra cui scegliere sotto ogni turno
   const opzioniMansione = mansioni.map(m => ({
@@ -269,6 +321,53 @@ export default function TurniSection({
     });
   };
 
+  /* ---------- l'orario, casella per casella ---------- */
+
+  const orariDi = (dipId) => orariDellaSettimana(orariSettimane, dipId, lunedi);
+
+  /** L'orario di quella casella: quello scritto a mano, o il normale del turno. */
+  const orarioDi = (dipId, giorno, turno) =>
+    orarioDelGiorno(orariDi(dipId), giorno, turno, orariPredefiniti);
+
+  /**
+   * Scrivere `null` non lascia un orario uguale al normale: cancella la
+   * riga, così se un domani cambia l'orario della pizzeria cambia anche qui.
+   */
+  const cambiaOrario = (dipId, giorno, orario) => {
+    const suoi = { ...orariDi(dipId) };
+    if (orario) suoi[giorno] = orario;
+    else delete suoi[giorno];
+
+    const dellaSettimana = { ...(orariSettimane[lunedi] || {}) };
+    // chi non ha più orari suoi esce dall'elenco, e una settimana senza
+    // nessuno sparisce: questi dati viaggiano tutti insieme al database
+    if (Object.keys(suoi).length > 0) dellaSettimana[dipId] = suoi;
+    else delete dellaSettimana[dipId];
+
+    const tutti = { ...orariSettimane };
+    if (Object.keys(dellaSettimana).length > 0) tutti[lunedi] = dellaSettimana;
+    else delete tutti[lunedi];
+
+    setOrariSettimane(tutti);
+  };
+
+  /** Le ore che una persona fa nella settimana mostrata, in minuti. */
+  const minutiDellaSettimana = (dip) => {
+    const suoiTurni = turniDi(dip.id);
+    const suoiOrari = orariDi(dip.id);
+    const sueFerie = ferie[dip.id] || [];
+
+    return giorni.reduce((somma, giorno, idx) => {
+      if (giorniChiusura.includes(giorno)) return somma;
+      if (sueFerie.includes(dateSettimana[idx])) return somma;
+
+      const turno = turnoDelGiorno(suoiTurni, giorno);
+      if (!eLavorativo(turno)) return somma;
+
+      return somma + durataOrario(orarioDelGiorno(suoiOrari, giorno, turno, orariPredefiniti));
+    }, 0);
+  };
+
   /* ---------- personale minimo ---------- */
 
   // Dove la settimana mostrata non arriva ai minimi chiesti
@@ -324,13 +423,19 @@ export default function TurniSection({
   const scriviSettimana = (destinazione) => {
     const copia = {};
     const copiaMansioni = {};
+    const copiaOrari = {};
     dipendenti.forEach(dip => {
       copia[dip.id] = { ...turniDi(dip.id) };
       // le mansioni scelte giorno per giorno viaggiano con i turni
       const sue = mansioniDi(dip.id);
       if (Object.keys(sue).length > 0) copiaMansioni[dip.id] = { ...sue };
+      // e così gli orari scritti a mano: chi entra prima di solito
+      // entra prima anche la settimana dopo
+      const suoiOrari = orariDi(dip.id);
+      if (Object.keys(suoiOrari).length > 0) copiaOrari[dip.id] = { ...suoiOrari };
     });
 
+    setOrariSettimane({ ...orariSettimane, [destinazione]: copiaOrari });
     setMansioniSettimane({ ...mansioniSettimane, [destinazione]: copiaMansioni });
     setSettimane({ ...settimane, [destinazione]: copia });
     setLunedi(destinazione);
@@ -354,7 +459,10 @@ export default function TurniSection({
       else if (sueFerie.includes(data)) valore = 'Ferie';
       else {
         const turno = turnoDelGiorno(suoiTurni, giorni[i]);
-        valore = etichettaTurno(turno);
+
+        // a chi lavora interessa l'ora, non la parola «Cena»
+        const suo = eLavorativo(turno) ? orarioDi(dip.id, giorni[i], turno) : null;
+        valore = suo ? `${suo.inizio}–${suo.fine}` : etichettaTurno(turno);
 
         // la mansione si scrive solo quando cambia da quella di sempre:
         // ripeterla sette volte sarebbe rumore
@@ -414,6 +522,9 @@ export default function TurniSection({
   const inTabella = bozza
     ? bozza.map(id => secondoOrdine.find(d => d.id === id)).filter(Boolean)
     : secondoOrdine;
+
+  // le ore di tutti messe insieme: quanto lavoro c'è in questa settimana
+  const minutiDiTutti = inTabella.reduce((somma, dip) => somma + minutiDellaSettimana(dip), 0);
 
   /* ---------- spostare i nomi tenendoli premuti ---------- */
 
@@ -688,7 +799,7 @@ export default function TurniSection({
           <div className="barra-turni">
             <div className="legenda">
               {/* "non previsto" non è un turno: nella legenda non ci sta */}
-              {TURNI.filter(t => t.valore && turniDisponibili.includes(t.valore)).map(t => (
+              {turniInUso.map(t => (
                 <span key={t.valore} className={`legenda-voce ${t.classe}`}>
                   <i className="punto" />
                   {t.etichetta}
@@ -766,6 +877,8 @@ export default function TurniSection({
                       eLavorativo(turnoDelGiorno(suoiTurni, giorno))
                     ).length;
 
+                    const minutiSettimana = minutiDellaSettimana(dip);
+
                     return (
                       <tr
                         key={dip.id}
@@ -806,6 +919,16 @@ export default function TurniSection({
                             >
                               {giorniLavorati}
                             </span>
+                            {/* le ore della settimana: roba da schermo,
+                                sul foglio non ci stanno */}
+                            {minutiSettimana > 0 && (
+                              <span
+                                className="conta-ore"
+                                title={`${oreScritte(minutiSettimana)} di lavoro in questa settimana`}
+                              >
+                                {oreScritte(minutiSettimana)}
+                              </span>
+                            )}
                             <button
                               className="icon-btn btn-invia"
                               onClick={() => invia(dip)}
@@ -832,15 +955,65 @@ export default function TurniSection({
                                   <span aria-hidden="true">🏖️</span> Ferie
                                 </span>
                               ) : (
-                                <div className="casella-turno">
-                                  <Select
-                                    valore={valore}
-                                    opzioni={opzioniDelGiorno(giorno)}
-                                    onChange={(v) => cambiaTurno(dip.id, giorno, v)}
-                                    classe={`pillola ${classeTurno(valore)}`}
-                                    etichettaAria={`Turno di ${dip.nome}`}
-                                    etichettaFuoriElenco={etichettaTurno(valore)}
-                                  />
+                                <div className={`casella-turno ${eLavorativo(valore) ? 'con-orario' : ''}`}>
+                                  {(() => {
+                                    const unico = turnoUnicoDelGiorno(giorno);
+                                    const lavora = eLavorativo(valore);
+
+                                    // Giorno aperto a pranzo e a cena: la scelta serve
+                                    // davvero, e resta la tendina di sempre.
+                                    if (!unico) {
+                                      return (
+                                        <>
+                                          <Select
+                                            valore={valore}
+                                            opzioni={opzioniDelGiorno(giorno)}
+                                            onChange={(v) => cambiaTurno(dip.id, giorno, v)}
+                                            classe={`pillola ${classeTurno(valore)}`}
+                                            etichettaAria={`Turno di ${dip.nome}`}
+                                            etichettaFuoriElenco={etichettaTurno(valore)}
+                                          />
+                                          {lavora && (
+                                            <OrarioTurno
+                                              orario={orarioDi(dip.id, giorno, valore)}
+                                              predefinito={orariPredefiniti[valore]}
+                                              suMisura={orarioSuMisura(orariDi(dip.id), giorno)}
+                                              classeTurno={classeTurno(valore)}
+                                              onChange={(o) => cambiaOrario(dip.id, giorno, o)}
+                                              etichettaAria={`Orario di ${dip.nome}`}
+                                            />
+                                          )}
+                                        </>
+                                      );
+                                    }
+
+                                    // Un turno solo: o l'orario, o il riposo.
+                                    return (
+                                      <>
+                                        <OrarioTurno
+                                          orario={orarioDi(dip.id, giorno, lavora ? valore : unico)}
+                                          predefinito={orariPredefiniti[unico]}
+                                          suMisura={lavora && orarioSuMisura(orariDi(dip.id), giorno)}
+                                          classeTurno={classeTurno(unico)}
+                                          spento={!lavora}
+                                          onAttiva={() => cambiaTurno(dip.id, giorno, unico)}
+                                          onChange={(o) => cambiaOrario(dip.id, giorno, o)}
+                                          etichettaAria={`Orario di ${dip.nome}`}
+                                        />
+                                        <button
+                                          type="button"
+                                          className={`tasto-riposo ${lavora ? '' : 'attivo'}`}
+                                          aria-pressed={!lavora}
+                                          onClick={() => cambiaTurno(dip.id, giorno, lavora ? 'Riposo' : unico)}
+                                          title={lavora
+                                            ? `Metti ${dip.nome} a riposo`
+                                            : `${dip.nome} è a riposo: tocca per rimetterlo al lavoro`}
+                                        >
+                                          Riposo
+                                        </button>
+                                      </>
+                                    );
+                                  })()}
 
                                   {/* la mansione si sceglie solo dove si lavora:
                                       a riposo o senza turno non vuol dire niente */}
@@ -875,6 +1048,15 @@ export default function TurniSection({
               </tbody>
             </table>
           </ScrollArea>
+
+          {/* il totale di tutti: quante ore costa la settimana */}
+          {minutiDiTutti > 0 && (
+            <p className="nota nota-ore">
+              Ore della settimana: <strong>{oreScritte(minutiDiTutti)}</strong>
+              {' '}in tutto, fra {inTabella.length} {inTabella.length === 1 ? 'persona' : 'persone'}.
+              {' '}L'orario si cambia toccandolo sulla casella; quello normale sta in Impostazioni.
+            </p>
+          )}
         </>
       )}
 

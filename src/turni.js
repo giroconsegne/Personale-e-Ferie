@@ -56,6 +56,67 @@ export function creaLettoreMansioni(mansioniSettimane) {
     );
 }
 
+/* ---------- gli orari di entrata e uscita ---------- */
+
+/**
+ * Gli orari stanno in una struttura a parte, fatta come `settimane`:
+ *
+ *   orariSettimane = { "2026-09-21": { "<id>": { martedi: { inizio: '18:00', fine: '00:30' } } } }
+ *
+ * Dove non c'è scritto niente vale l'orario normale del turno, quello
+ * delle Impostazioni: così a mano si scrive solo chi fa diverso.
+ */
+export function orariDellaSettimana(orariSettimane, dipId, lunedi) {
+  return orariSettimane?.[lunedi]?.[dipId] || {};
+}
+
+export const orarioDelGiorno = (orariPersona, giorno, turno, predefiniti) =>
+  orariPersona?.[giorno] || predefiniti?.[turno] || null;
+
+/** true se su quella casella è stato scritto un orario suo. */
+export const orarioSuMisura = (orariPersona, giorno) => Boolean(orariPersona?.[giorno]);
+
+/** I minuti passati da mezzanotte, o null se non è un orario. */
+const minutiDa = (hhmm) => {
+  const pezzi = /^([0-9]{1,2}):([0-9]{2})$/.exec(String(hhmm ?? '').trim());
+  if (!pezzi) return null;
+  const ore = Number(pezzi[1]);
+  const minuti = Number(pezzi[2]);
+  if (ore > 23 || minuti > 59) return null;
+  return ore * 60 + minuti;
+};
+
+export const orarioValido = (orario) =>
+  minutiDa(orario?.inizio) !== null && minutiDa(orario?.fine) !== null;
+
+/**
+ * Quanto dura un turno, in minuti. Chi stacca dopo mezzanotte
+ * (18:30 → 00:30) ha lavorato sei ore, non meno diciotto.
+ */
+export function durataOrario(orario) {
+  const inizio = minutiDa(orario?.inizio);
+  const fine = minutiDa(orario?.fine);
+  if (inizio === null || fine === null) return 0;
+  return fine > inizio ? fine - inizio : fine + 24 * 60 - inizio;
+}
+
+/** I minuti scritti come li legge una persona: `38h 30`, oppure `38h`. */
+export function oreScritte(minuti) {
+  if (!minuti) return '0h';
+  const ore = Math.floor(minuti / 60);
+  const resto = minuti % 60;
+  return resto ? `${ore}h ${String(resto).padStart(2, '0')}` : `${ore}h`;
+}
+
+/** Quanto dura il turno di una persona in una data qualsiasi, in minuti. */
+export function creaLettoreMinuti(settimane, orariSettimane, predefiniti) {
+  return (dipId, iso, turno) => {
+    if (!eLavorativo(turno)) return 0;
+    const suoi = orariDellaSettimana(orariSettimane, dipId, lunediDi(iso));
+    return durataOrario(orarioDelGiorno(suoi, chiaveGiorno(iso), turno, predefiniti));
+  };
+}
+
 /* ---------- personale minimo ---------- */
 
 /**

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
-import { LOCALI } from './costanti';
+import { LOCALI, ORARI_PREDEFINITI } from './costanti';
 
 const CHIAVE_LOCALE = 'pizzeriaApp';
 const TABELLA = 'stato';
@@ -19,6 +19,10 @@ const localeVuoto = ({ id, nome }) => ({
   settimane: {},
   // la mansione scelta giorno per giorno, dove non vale quella fissa
   mansioniSettimane: {},
+  // l'orario di entrata e uscita, dove non vale quello normale del turno
+  orariSettimane: {},
+  // l'orario normale dei turni di questa pizzeria
+  orariPredefiniti: { ...ORARI_PREDEFINITI },
   ferie: {},
   // l'ordine delle righe nei turni, deciso trascinando i nomi: elenco di
   // id. Vuoto vuol dire "come viene", cioè raggruppati per mansione.

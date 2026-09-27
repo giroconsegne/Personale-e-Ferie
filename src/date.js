@@ -118,8 +118,12 @@ export function giorniDelPeriodo(dal, al, giorniChiusura) {
  * "lavorati" considera solo i giorni già trascorsi, "previsti" tutto il periodo.
  * `turnoDelGiorno(iso)` restituisce il turno valido in quella data settimana.
  */
-export function conteggiaGiorni({ dal, al, turnoDelGiorno, ferieDip, giorniChiusura, oggi }) {
-  const conta = { lavorati: 0, previsti: 0, mattine: 0, sere: 0, ferie: 0, riposi: 0, chiusure: 0 };
+export function conteggiaGiorni({ dal, al, turnoDelGiorno, minutiDelGiorno, ferieDip, giorniChiusura, oggi }) {
+  const conta = {
+    lavorati: 0, previsti: 0, mattine: 0, sere: 0, ferie: 0, riposi: 0, chiusure: 0,
+    // i minuti lavorati e quelli di tutto il periodo, come per i giorni
+    minuti: 0, minutiPrevisti: 0
+  };
   let corrente = dal;
 
   for (let i = 0; i <= 400 && corrente <= al; i++) {
@@ -133,8 +137,12 @@ export function conteggiaGiorni({ dal, al, turnoDelGiorno, ferieDip, giorniChius
         conta.riposi++;
       } else {
         conta.previsti++;
+        // chi non passa `minutiDelGiorno` vuole solo i giorni: le ore restano a zero
+        const minuti = minutiDelGiorno ? minutiDelGiorno(corrente, turno) : 0;
+        conta.minutiPrevisti += minuti;
         if (corrente <= oggi) {
           conta.lavorati++;
+          conta.minuti += minuti;
           if (turno === 'Mattina') conta.mattine++;
           else conta.sere++;
         }

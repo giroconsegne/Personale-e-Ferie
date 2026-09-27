@@ -6,12 +6,15 @@ import {
   APERTURE,
   GIORNI,
   GIORNI_LABEL,
+  TURNI,
   aperturaDi,
   classeReparto,
+  eLavorativo,
   repartoDi,
   stileMansione
 } from '../costanti';
 import { contaFerie, ferieDellAnno, annoCorrente } from '../date';
+import { durataOrario, orarioValido, oreScritte } from '../turni';
 
 export default function ImpostazioniSection({
   dipendenti,
@@ -22,6 +25,8 @@ export default function ImpostazioniSection({
   mansioni,
   giorniChiusura,
   aperture,
+  orariPredefiniti,
+  setOrariPredefiniti,
   apriAggiungiDipendente,
   apriAggiungiMansione,
   apriGiorniChiusura
@@ -197,6 +202,63 @@ export default function ImpostazioniSection({
             })}
           </ul>
         </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <div>
+            <h2>Orario dei turni</h2>
+            <p className="card-sub">
+              L'orario normale di entrata e uscita: ogni casella dei turni parte da qui,
+              e si corregge solo dove qualcuno fa diverso
+            </p>
+          </div>
+        </div>
+
+        <div className="blocco-orari">
+          {TURNI.filter(t => eLavorativo(t.valore)).map(turno => {
+            const orario = orariPredefiniti[turno.valore] || { inizio: '', fine: '' };
+
+            // si scrive un turno per volta senza toccare l'altro
+            const scrivi = (campo, valore) =>
+              setOrariPredefiniti({
+                ...orariPredefiniti,
+                [turno.valore]: { ...orario, [campo]: valore }
+              });
+
+            return (
+              <div key={turno.valore} className="riga-orario-standard">
+                <span className={`pillola ${turno.classe}`}>{turno.etichetta}</span>
+
+                <label className="campo-orario">
+                  <span>Entra</span>
+                  <input
+                    type="time"
+                    value={orario.inizio}
+                    onChange={(e) => scrivi('inizio', e.target.value)}
+                  />
+                </label>
+
+                <label className="campo-orario">
+                  <span>Esce</span>
+                  <input
+                    type="time"
+                    value={orario.fine}
+                    onChange={(e) => scrivi('fine', e.target.value)}
+                  />
+                </label>
+
+                <span className="durata-standard">
+                  {orarioValido(orario) ? oreScritte(durataOrario(orario)) : '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="nota-resoconto">
+          Chi stacca dopo mezzanotte va scritto lo stesso: da 18:30 a 00:30 sono sei ore, non meno diciotto.
+        </p>
       </section>
     </>
   );

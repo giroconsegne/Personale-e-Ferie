@@ -12,6 +12,7 @@ import {
   GIORNI,
   GIORNI_LABEL,
   LOCALI,
+  ORARI_PREDEFINITI,
   REPARTI,
   REPARTO_PREDEFINITO,
   aperturaDi,
@@ -80,6 +81,9 @@ function App() {
   const locale = locali[indiceLocale];
   const { dipendenti, settimane, ferie, aperture } = locale;
   const mansioniSettimane = locale.mansioniSettimane || NIENTE;
+  // gli orari scritti a mano sulle caselle, e quelli normali dei turni
+  const orariSettimane = locale.orariSettimane || NIENTE;
+  const orariPredefiniti = locale.orariPredefiniti || ORARI_PREDEFINITI;
   const minimi = locale.minimi || NIENTE;
   // l'ordine dei nomi nei turni, se è stato deciso trascinandoli
   const ordine = locale.ordine || VUOTO;
@@ -107,6 +111,8 @@ function App() {
   const setDipendenti = (v) => modificaLocale({ dipendenti: v });
   const setSettimane = (v) => modificaLocale({ settimane: v });
   const setMansioniSettimane = (v) => modificaLocale({ mansioniSettimane: v });
+  const setOrariSettimane = (v) => modificaLocale({ orariSettimane: v });
+  const setOrariPredefiniti = (v) => modificaLocale({ orariPredefiniti: v });
   const setFerie = (v) => modificaLocale({ ferie: v });
   const setOrdine = (v) => modificaLocale({ ordine: v });
 
@@ -217,6 +223,7 @@ function App() {
       dipendenti: dipendenti.filter(d => d.id !== id),
       settimane: senzaLaPersona(settimane),
       mansioniSettimane: senzaLaPersona(mansioniSettimane),
+      orariSettimane: senzaLaPersona(orariSettimane),
       ferie: nuoveFerie,
       ordine: ordine.filter(x => x !== id)
     });
@@ -464,6 +471,9 @@ function App() {
               setSettimane={setSettimane}
               mansioniSettimane={mansioniSettimane}
               setMansioniSettimane={setMansioniSettimane}
+              orariSettimane={orariSettimane}
+              setOrariSettimane={setOrariSettimane}
+              orariPredefiniti={orariPredefiniti}
               ferie={ferie}
               ordine={ordine}
               setOrdine={setOrdine}
@@ -503,6 +513,8 @@ function App() {
             <ResocontoSection
               dipendenti={dipendenti}
               settimane={settimane}
+              orariSettimane={orariSettimane}
+              orariPredefiniti={orariPredefiniti}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
             />
@@ -518,6 +530,8 @@ function App() {
               mansioni={mansioni}
               giorniChiusura={giorniChiusura}
               aperture={aperture}
+              orariPredefiniti={orariPredefiniti}
+              setOrariPredefiniti={setOrariPredefiniti}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriAggiungiMansione={() => setShowMansioneDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}
