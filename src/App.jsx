@@ -84,6 +84,9 @@ function App() {
   // gli orari scritti a mano sulle caselle, e quelli normali dei turni
   const orariSettimane = locale.orariSettimane || NIENTE;
   const orariPredefiniti = locale.orariPredefiniti || ORARI_PREDEFINITI;
+  // pizzerie diverse lavorano in modo diverso: dove gli orari non servono
+  // la casella dei turni resta quella semplice
+  const orariAttivi = locale.orariAttivi !== false;
   const minimi = locale.minimi || NIENTE;
   // l'ordine dei nomi nei turni, se è stato deciso trascinandoli
   const ordine = locale.ordine || VUOTO;
@@ -113,6 +116,7 @@ function App() {
   const setMansioniSettimane = (v) => modificaLocale({ mansioniSettimane: v });
   const setOrariSettimane = (v) => modificaLocale({ orariSettimane: v });
   const setOrariPredefiniti = (v) => modificaLocale({ orariPredefiniti: v });
+  const setOrariAttivi = (v) => modificaLocale({ orariAttivi: v });
   const setFerie = (v) => modificaLocale({ ferie: v });
   const setOrdine = (v) => modificaLocale({ ordine: v });
 
@@ -474,6 +478,7 @@ function App() {
               orariSettimane={orariSettimane}
               setOrariSettimane={setOrariSettimane}
               orariPredefiniti={orariPredefiniti}
+              orariAttivi={orariAttivi}
               ferie={ferie}
               ordine={ordine}
               setOrdine={setOrdine}
@@ -515,6 +520,7 @@ function App() {
               settimane={settimane}
               orariSettimane={orariSettimane}
               orariPredefiniti={orariPredefiniti}
+              orariAttivi={orariAttivi}
               ferie={ferie}
               giorniChiusura={giorniChiusura}
             />
@@ -532,6 +538,8 @@ function App() {
               aperture={aperture}
               orariPredefiniti={orariPredefiniti}
               setOrariPredefiniti={setOrariPredefiniti}
+              orariAttivi={orariAttivi}
+              setOrariAttivi={setOrariAttivi}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriAggiungiMansione={() => setShowMansioneDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}

@@ -12,7 +12,7 @@ export const online = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const client = online ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 /** Una pizzeria appena aperta: nome, e tutto il resto vuoto. */
-const localeVuoto = ({ id, nome }) => ({
+const localeVuoto = ({ id, nome, orari = true }) => ({
   id,
   nome,
   dipendenti: [],
@@ -23,6 +23,8 @@ const localeVuoto = ({ id, nome }) => ({
   orariSettimane: {},
   // l'orario normale dei turni di questa pizzeria
   orariPredefiniti: { ...ORARI_PREDEFINITI },
+  // se questa pizzeria segna gli orari di entrata e uscita
+  orariAttivi: orari,
   ferie: {},
   // l'ordine delle righe nei turni, deciso trascinando i nomi: elenco di
   // id. Vuoto vuol dire "come viene", cioè raggruppati per mansione.

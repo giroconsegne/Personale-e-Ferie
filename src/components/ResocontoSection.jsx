@@ -15,6 +15,7 @@ export default function ResocontoSection({
   settimane,
   orariSettimane,
   orariPredefiniti,
+  orariAttivi,
   ferie,
   giorniChiusura
 }) {
@@ -89,7 +90,11 @@ export default function ResocontoSection({
       <div className="card-head">
         <div>
           <h2>Resoconto</h2>
-          <p className="card-sub">Giorni e ore per persona, nel mese e nell'anno</p>
+          <p className="card-sub">
+            {orariAttivi
+              ? "Giorni e ore per persona, nel mese e nell'anno"
+              : "Giorni lavorati per persona, nel mese e nell'anno"}
+          </p>
         </div>
         <div className="navigazione-mese">
           <button className="icon-btn" onClick={() => cambiaMese(-1)} title="Mese precedente">‹</button>
@@ -112,12 +117,12 @@ export default function ResocontoSection({
               <thead>
                 <tr className="riga-gruppi">
                   <th className="col-nome" rowSpan={2}>Dipendente</th>
-                  <th colSpan={5} className="gruppo-mese">{MESI[vista.mese]}</th>
+                  <th colSpan={orariAttivi ? 5 : 4} className="gruppo-mese">{MESI[vista.mese]}</th>
                   <th colSpan={2} className="gruppo-anno">Anno {vista.anno}</th>
                 </tr>
                 <tr>
                   <th>Lavorati</th>
-                  <th>Ore</th>
+                  {orariAttivi && <th>Ore</th>}
                   <th>Pranzi</th>
                   <th>Cene</th>
                   <th>Ferie</th>
@@ -147,10 +152,12 @@ export default function ResocontoSection({
                       <span className="num num-neutro">{mese.lavorati}</span>
                       <span className="su-totale">di {mese.previsti}</span>
                     </td>
-                    <td>
-                      <span className="num num-ore">{oreScritte(mese.minuti)}</span>
-                      <span className="su-totale">di {oreScritte(mese.minutiPrevisti)}</span>
-                    </td>
+                    {orariAttivi && (
+                      <td>
+                        <span className="num num-ore">{oreScritte(mese.minuti)}</span>
+                        <span className="su-totale">di {oreScritte(mese.minutiPrevisti)}</span>
+                      </td>
+                    )}
                     <td><span className="conta conta-mattina">{mese.mattine}</span></td>
                     <td><span className="conta conta-sera">{mese.sere}</span></td>
                     <td><span className="num num-usate">{mese.ferie}</span></td>
@@ -170,10 +177,12 @@ export default function ResocontoSection({
                     <span className="num num-neutro">{totali.lavorati}</span>
                     <span className="su-totale">di {totali.previsti}</span>
                   </td>
-                  <td>
-                    <span className="num num-ore">{oreScritte(totali.minuti)}</span>
-                    <span className="su-totale">di {oreScritte(totali.minutiPrevisti)}</span>
-                  </td>
+                  {orariAttivi && (
+                    <td>
+                      <span className="num num-ore">{oreScritte(totali.minuti)}</span>
+                      <span className="su-totale">di {oreScritte(totali.minutiPrevisti)}</span>
+                    </td>
+                  )}
                   <td><span className="conta conta-mattina">{totali.mattine}</span></td>
                   <td><span className="conta conta-sera">{totali.sere}</span></td>
                   <td><span className="num num-usate">{totali.ferie}</span></td>

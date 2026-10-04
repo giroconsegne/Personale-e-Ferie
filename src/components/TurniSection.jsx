@@ -206,6 +206,7 @@ export default function TurniSection({
   orariSettimane,
   setOrariSettimane,
   orariPredefiniti,
+  orariAttivi,
   ferie,
   ordine,
   setOrdine,
@@ -460,8 +461,9 @@ export default function TurniSection({
       else {
         const turno = turnoDelGiorno(suoiTurni, giorni[i]);
 
-        // a chi lavora interessa l'ora, non la parola «Cena»
-        const suo = eLavorativo(turno) ? orarioDi(dip.id, giorni[i], turno) : null;
+        // a chi lavora interessa l'ora, non la parola «Cena» — dove però
+        // gli orari non si segnano resta il nome del turno
+        const suo = orariAttivi && eLavorativo(turno) ? orarioDi(dip.id, giorni[i], turno) : null;
         valore = suo ? `${suo.inizio}–${suo.fine}` : etichettaTurno(turno);
 
         // la mansione si scrive solo quando cambia da quella di sempre:
@@ -921,7 +923,7 @@ export default function TurniSection({
                             </span>
                             {/* le ore della settimana: roba da schermo,
                                 sul foglio non ci stanno */}
-                            {minutiSettimana > 0 && (
+                            {orariAttivi && minutiSettimana > 0 && (
                               <span
                                 className="conta-ore"
                                 title={`${oreScritte(minutiSettimana)} di lavoro in questa settimana`}
@@ -955,9 +957,11 @@ export default function TurniSection({
                                   <span aria-hidden="true">🏖️</span> Ferie
                                 </span>
                               ) : (
-                                <div className={`casella-turno ${eLavorativo(valore) ? 'con-orario' : ''}`}>
+                                <div className={`casella-turno ${orariAttivi && eLavorativo(valore) ? 'con-orario' : ''}`}>
                                   {(() => {
-                                    const unico = turnoUnicoDelGiorno(giorno);
+                                    // dove la pizzeria non segna gli orari la casella
+                                    // resta quella di sempre, con la tendina
+                                    const unico = orariAttivi ? turnoUnicoDelGiorno(giorno) : null;
                                     const lavora = eLavorativo(valore);
 
                                     // Giorno aperto a pranzo e a cena: la scelta serve
@@ -973,7 +977,7 @@ export default function TurniSection({
                                             etichettaAria={`Turno di ${dip.nome}`}
                                             etichettaFuoriElenco={etichettaTurno(valore)}
                                           />
-                                          {lavora && (
+                                          {orariAttivi && lavora && (
                                             <OrarioTurno
                                               orario={orarioDi(dip.id, giorno, valore)}
                                               predefinito={orariPredefiniti[valore]}
@@ -1050,7 +1054,7 @@ export default function TurniSection({
           </ScrollArea>
 
           {/* il totale di tutti: quante ore costa la settimana */}
-          {minutiDiTutti > 0 && (
+          {orariAttivi && minutiDiTutti > 0 && (
             <p className="nota nota-ore">
               Ore della settimana: <strong>{oreScritte(minutiDiTutti)}</strong>
               {' '}in tutto, fra {inTabella.length} {inTabella.length === 1 ? 'persona' : 'persone'}.

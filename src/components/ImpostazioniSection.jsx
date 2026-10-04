@@ -27,6 +27,8 @@ export default function ImpostazioniSection({
   aperture,
   orariPredefiniti,
   setOrariPredefiniti,
+  orariAttivi,
+  setOrariAttivi,
   apriAggiungiDipendente,
   apriAggiungiMansione,
   apriGiorniChiusura
@@ -209,12 +211,28 @@ export default function ImpostazioniSection({
           <div>
             <h2>Orario dei turni</h2>
             <p className="card-sub">
-              L'orario normale di entrata e uscita: ogni casella dei turni parte da qui,
-              e si corregge solo dove qualcuno fa diverso
+              {orariAttivi
+                ? "L'orario normale di entrata e uscita: ogni casella dei turni parte da qui, e si corregge solo dove qualcuno fa diverso"
+                : 'Qui gli orari non si segnano: nei turni si sceglie solo Pranzo, Cena o Riposo'}
             </p>
           </div>
+          <button
+            className="btn btn-secondario"
+            onClick={() => setOrariAttivi(!orariAttivi)}
+          >
+            {orariAttivi ? 'Non mi servono' : 'Attiva gli orari'}
+          </button>
         </div>
 
+        {!orariAttivi ? (
+          <div className="blocco-orari">
+            <p className="nota-resoconto senza-orari">
+              Questa pizzeria tiene i turni senza orari. Le ore lavorate non vengono
+              contate e sul foglio stampato resta scritto il turno.
+              {' '}Vale solo qui: l'altra pizzeria va per conto suo.
+            </p>
+          </div>
+        ) : (
         <div className="blocco-orari">
           {TURNI.filter(t => eLavorativo(t.valore)).map(turno => {
             const orario = orariPredefiniti[turno.valore] || { inizio: '', fine: '' };
@@ -255,10 +273,13 @@ export default function ImpostazioniSection({
             );
           })}
         </div>
+        )}
 
-        <p className="nota-resoconto">
-          Chi stacca dopo mezzanotte va scritto lo stesso: da 18:30 a 00:30 sono sei ore, non meno diciotto.
-        </p>
+        {orariAttivi && (
+          <p className="nota-resoconto">
+            Chi stacca dopo mezzanotte va scritto lo stesso: da 18:30 a 00:30 sono sei ore, non meno diciotto.
+          </p>
+        )}
       </section>
     </>
   );

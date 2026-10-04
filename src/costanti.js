@@ -10,8 +10,11 @@ export const GIORNI_SIGLA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
  * L'ordine conta: i dati salvati prima di questa divisione finiscono nella prima.
  */
 export const LOCALI = [
-  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Mattina', 'Sera', 'Riposo', ''] },
-  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Riposo', ''] }
+  // `orari`: se la pizzeria segna l'entrata e l'uscita di ognuno. Dove non
+  // serve, la casella resta quella semplice con Pranzo, Cena e Riposo.
+  // È solo il punto di partenza: poi si accende e si spegne da Impostazioni.
+  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Mattina', 'Sera', 'Riposo', ''], orari: false },
+  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Riposo', ''], orari: true }
 ];
 
 /** I turni che si possono scegliere in una pizzeria. */
