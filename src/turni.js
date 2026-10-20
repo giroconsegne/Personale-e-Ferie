@@ -94,18 +94,47 @@ const minutiDa = (hhmm) => {
   return ore * 60 + minuti;
 };
 
-export const orarioValido = (orario) =>
-  minutiDa(orario?.inizio) !== null && minutiDa(orario?.fine) !== null;
+/** La seconda parte di un orario spezzato, se c'è ed è scritta per intero. */
+const secondaParte = (orario) =>
+  minutiDa(orario?.inizio2) !== null && minutiDa(orario?.fine2) !== null
+    ? { inizio: orario.inizio2, fine: orario.fine2 }
+    : null;
 
 /**
- * Quanto dura un turno, in minuti. Chi stacca dopo mezzanotte
- * (18:30 → 00:30) ha lavorato sei ore, non meno diciotto.
+ * Un orario va bene se la prima parte c'è tutta. La seconda può mancare
+ * del tutto (turno unico), ma non può restare a metà.
+ */
+export const orarioValido = (orario) => {
+  if (minutiDa(orario?.inizio) === null || minutiDa(orario?.fine) === null) return false;
+
+  const scritto2 = Boolean(orario?.inizio2) || Boolean(orario?.fine2);
+  return !scritto2 || secondaParte(orario) !== null;
+};
+
+/** Quanto dura una fetta sola, in minuti. */
+const durataParte = (parte) => {
+  const inizio = minutiDa(parte?.inizio);
+  const fine = minutiDa(parte?.fine);
+  if (inizio === null || fine === null) return 0;
+  // chi stacca dopo mezzanotte (18:30 → 00:30) ha lavorato sei ore,
+  // non meno diciotto
+  return fine > inizio ? fine - inizio : fine + 24 * 60 - inizio;
+};
+
+/**
+ * Quanto dura un turno, in minuti: le due fette dello spezzato si
+ * sommano, e la pausa in mezzo non si conta.
  */
 export function durataOrario(orario) {
-  const inizio = minutiDa(orario?.inizio);
-  const fine = minutiDa(orario?.fine);
-  if (inizio === null || fine === null) return 0;
-  return fine > inizio ? fine - inizio : fine + 24 * 60 - inizio;
+  return durataParte(orario) + durataParte(secondaParte(orario));
+}
+
+/** L'orario come si legge: «18:30–23:30», o «12:00–15:00 · 18:30–23:30». */
+export function orarioScritto(orario) {
+  if (!orario?.inizio || !orario?.fine) return '';
+  const prima = `${orario.inizio}–${orario.fine}`;
+  const due = secondaParte(orario);
+  return due ? `${prima} · ${due.inizio}–${due.fine}` : prima;
 }
 
 /** I minuti scritti come li legge una persona: `38h 30`, oppure `38h`. */

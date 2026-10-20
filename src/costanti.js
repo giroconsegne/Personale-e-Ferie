@@ -87,8 +87,13 @@ export const TURNI = [
  */
 export const ORARI_PREDEFINITI = {
   Mattina: { inizio: '12:00', fine: '15:00' },
-  Sera: { inizio: '18:30', fine: '23:30' }
+  Sera: { inizio: '18:30', fine: '23:30' },
+  // il doppio turno è spezzato: si entra, si esce, si rientra e si richiude
+  Entrambi: { inizio: '12:00', fine: '15:00', inizio2: '18:30', fine2: '23:30' }
 };
+
+/** true se quel turno vuole l'orario spezzato, cioè due entrate e due uscite. */
+export const eSpezzato = (turno) => turno === 'Entrambi';
 
 // Un giorno di cui non è stato deciso niente è "non previsto"
 export const TURNO_PREDEFINITO = '';

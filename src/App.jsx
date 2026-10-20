@@ -237,6 +237,12 @@ function App() {
     setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, reparto } : d)));
   };
 
+  // Gli orari si segnano persona per persona: chi non ce l'ha acceso
+  // tiene la casella semplice, senza entrata e uscita.
+  const cambiaOrariDipendente = (id, attivo) => {
+    setDipendenti(dipendenti.map(d => (d.id === id ? { ...d, orari: attivo } : d)));
+  };
+
   // Aggiungi mansione: resta a questa pizzeria, l'altra ha le sue
   const aggiungiMansione = () => {
     const nome = nuovaMansione.trim();
@@ -554,6 +560,7 @@ function App() {
               setOrariPredefiniti={setOrariPredefiniti}
               orariAttivi={orariAttivi}
               setOrariAttivi={setOrariAttivi}
+              cambiaOrariDipendente={cambiaOrariDipendente}
               apriAggiungiDipendente={() => setShowAddDrawer(true)}
               apriAggiungiMansione={() => setShowMansioneDrawer(true)}
               apriGiorniChiusura={() => setShowGiorniDrawer(true)}

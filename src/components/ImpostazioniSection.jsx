@@ -10,6 +10,7 @@ import {
   aperturaDi,
   classeReparto,
   eLavorativo,
+  eSpezzato,
   repartoDi,
   stileMansione
 } from '../costanti';
@@ -29,6 +30,7 @@ export default function ImpostazioniSection({
   setOrariPredefiniti,
   orariAttivi,
   setOrariAttivi,
+  cambiaOrariDipendente,
   apriAggiungiDipendente,
   apriAggiungiMansione,
   apriGiorniChiusura
@@ -94,6 +96,7 @@ export default function ImpostazioniSection({
                 <tr>
                   <th className="col-nome">Dipendente</th>
                   <th>Mansione</th>
+                  {orariAttivi && <th>Orari</th>}
                   <th>Ferie spettanti</th>
                   <th>Godute nel {annoCorrente()}</th>
                   <th className="col-azioni">Azioni</th>
@@ -128,6 +131,22 @@ export default function ImpostazioniSection({
                           etichettaFuoriElenco={reparto}
                         />
                       </td>
+
+                      {orariAttivi && (
+                        <td>
+                          <button
+                            type="button"
+                            className={`tasto-orari ${dip.orari ? 'acceso' : ''}`}
+                            aria-pressed={Boolean(dip.orari)}
+                            onClick={() => cambiaOrariDipendente(dip.id, !dip.orari)}
+                            title={dip.orari
+                              ? `${dip.nome}: gli orari si segnano. Tocca per smettere.`
+                              : `${dip.nome}: gli orari non si segnano. Tocca per cominciare.`}
+                          >
+                            {dip.orari ? '🕒 Sì' : 'No'}
+                          </button>
+                        </td>
+                      )}
 
                       <td>
                         {inModifica === dip.id ? (
@@ -235,7 +254,7 @@ export default function ImpostazioniSection({
         ) : (
         <div className="blocco-orari">
           {TURNI.filter(t => eLavorativo(t.valore)).map(turno => {
-            const orario = orariPredefiniti[turno.valore] || { inizio: '', fine: '' };
+            const orario = orariPredefiniti[turno.valore] || {};
 
             // si scrive un turno per volta senza toccare l'altro
             const scrivi = (campo, valore) =>
@@ -244,27 +263,60 @@ export default function ImpostazioniSection({
                 [turno.valore]: { ...orario, [campo]: valore }
               });
 
+            // il doppio turno è spezzato: si esce e si rientra
+            const spezzato = eSpezzato(turno.valore);
+
             return (
-              <div key={turno.valore} className="riga-orario-standard">
+              <div key={turno.valore} className={`riga-orario-standard ${spezzato ? 'spezzato' : ''}`}>
                 <span className={`pillola ${turno.classe}`}>{turno.etichetta}</span>
 
-                <label className="campo-orario">
-                  <span>Entra</span>
-                  <input
-                    type="time"
-                    value={orario.inizio}
-                    onChange={(e) => scrivi('inizio', e.target.value)}
-                  />
-                </label>
+                <div className="parti-orario">
+                  <div className="parte-orario">
+                    {spezzato && <span className="etichetta-parte">Pranzo</span>}
 
-                <label className="campo-orario">
-                  <span>Esce</span>
-                  <input
-                    type="time"
-                    value={orario.fine}
-                    onChange={(e) => scrivi('fine', e.target.value)}
-                  />
-                </label>
+                    <label className="campo-orario">
+                      <span>Entra</span>
+                      <input
+                        type="time"
+                        value={orario.inizio || ''}
+                        onChange={(e) => scrivi('inizio', e.target.value)}
+                      />
+                    </label>
+
+                    <label className="campo-orario">
+                      <span>Esce</span>
+                      <input
+                        type="time"
+                        value={orario.fine || ''}
+                        onChange={(e) => scrivi('fine', e.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  {spezzato && (
+                    <div className="parte-orario">
+                      <span className="etichetta-parte">Cena</span>
+
+                      <label className="campo-orario">
+                        <span>Rientra</span>
+                        <input
+                          type="time"
+                          value={orario.inizio2 || ''}
+                          onChange={(e) => scrivi('inizio2', e.target.value)}
+                        />
+                      </label>
+
+                      <label className="campo-orario">
+                        <span>Esce</span>
+                        <input
+                          type="time"
+                          value={orario.fine2 || ''}
+                          onChange={(e) => scrivi('fine2', e.target.value)}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
 
                 <span className="durata-standard">
                   {orarioValido(orario) ? oreScritte(durataOrario(orario)) : '—'}
@@ -278,6 +330,7 @@ export default function ImpostazioniSection({
         {orariAttivi && (
           <p className="nota-resoconto">
             Chi stacca dopo mezzanotte va scritto lo stesso: da 18:30 a 00:30 sono sei ore, non meno diciotto.
+            {' '}Nel doppio turno la pausa fra il pranzo e la cena non viene contata.
           </p>
         )}
       </section>

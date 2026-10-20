@@ -37,7 +37,8 @@ export default function ResocontoSection({
     return dipendenti.map(dip => {
       const comuni = {
         turnoDelGiorno: (iso) => leggiTurno(dip.id, iso),
-        minutiDelGiorno: (iso, turno) => leggiMinuti(dip.id, iso, turno),
+        // le ore si contano solo a chi ha l'orario acceso
+        minutiDelGiorno: dip.orari ? (iso, turno) => leggiMinuti(dip.id, iso, turno) : null,
         ferieDip: ferie[dip.id] || [],
         giorniChiusura,
         oggi: isoOggi
@@ -154,8 +155,14 @@ export default function ResocontoSection({
                     </td>
                     {orariAttivi && (
                       <td>
-                        <span className="num num-ore">{oreScritte(mese.minuti)}</span>
-                        <span className="su-totale">di {oreScritte(mese.minutiPrevisti)}</span>
+                        {dip.orari ? (
+                          <>
+                            <span className="num num-ore">{oreScritte(mese.minuti)}</span>
+                            <span className="su-totale">di {oreScritte(mese.minutiPrevisti)}</span>
+                          </>
+                        ) : (
+                          <span className="su-totale" title={`${dip.nome} non segna gli orari`}>—</span>
+                        )}
                       </td>
                     )}
                     <td><span className="conta conta-mattina">{mese.mattine}</span></td>

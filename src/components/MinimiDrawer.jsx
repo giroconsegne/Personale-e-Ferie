@@ -18,6 +18,23 @@ const SERVIZI = [
   { nome: 'cena', lettera: 'C' }
 ];
 
+/**
+ * Cliccando su una casella si scrive sopra quello che c'è, senza doverlo
+ * cancellare: quasi sempre c'è uno zero. La selezione va fatta un attimo
+ * dopo l'evento, perché il browser rimette il cursore subito dopo, e il
+ * rilascio del mouse non deve disfarla.
+ */
+const selezionaTutto = (e) => {
+  const casella = e.currentTarget;
+  // un timer e non requestAnimationFrame: quello non scatta se la finestra
+  // è in secondo piano, e la casella resterebbe senza selezione
+  setTimeout(() => {
+    try { casella.select(); } catch { /* casella già sparita */ }
+  }, 0);
+};
+
+const nonSpostareIlCursore = (e) => e.preventDefault();
+
 export default function MinimiDrawer({ mansioni, minimi, aperture, quantiNellaMansione, cambiaMinimo, chiudi }) {
   // Se in settimana c'è anche un solo giorno aperto a pranzo e a cena,
   // tutti i giorni mostrano le due righe P e C: dove il servizio non c'è
@@ -68,10 +85,10 @@ export default function MinimiDrawer({ mansioni, minimi, aperture, quantiNellaMa
                             <span className="minimo-chiuso" title={`${GIORNI_LABEL[i]}: pizzeria chiusa`}>—</span>
                           ) : (
                             <input
-                              type="number"
-                              min="0"
-                              max="99"
+                              type="text"
                               inputMode="numeric"
+                              onFocus={selezionaTutto}
+                              onMouseUp={nonSpostareIlCursore}
                               value={minimoDi(minimi, mansione, giorno, 'cena')}
                               onChange={(e) => cambiaMinimo(mansione, giorno, 'cena', e.target.value)}
                               aria-label={`${mansione}, ${GIORNI_LABEL[i]}`}
@@ -91,10 +108,10 @@ export default function MinimiDrawer({ mansioni, minimi, aperture, quantiNellaMa
 
                             {servizi.includes(nome) ? (
                               <input
-                                type="number"
-                                min="0"
-                                max="99"
+                                type="text"
                                 inputMode="numeric"
+                                onFocus={selezionaTutto}
+                                onMouseUp={nonSpostareIlCursore}
                                 value={minimoDi(minimi, mansione, giorno, nome)}
                                 onChange={(e) => cambiaMinimo(mansione, giorno, nome, e.target.value)}
                                 aria-label={`${mansione}, ${GIORNI_LABEL[i]}, ${nome}`}

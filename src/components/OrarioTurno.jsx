@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import usePosizionePopup, { stilePopup } from '../usePosizionePopup';
-import { durataOrario, oreScritte, orarioValido } from '../turni';
+import { durataOrario, oreScritte, orarioScritto, orarioValido } from '../turni';
 
 const ALTEZZA_POPUP = 168;
+const ALTEZZA_POPUP_SPEZZATO = 268;
 const LARGHEZZA_POPUP = 214;
 
 /**
@@ -22,6 +23,9 @@ export default function OrarioTurno({
   // "spento" = quel giorno la persona non lavora: si vede l'orario che
   // avrebbe, in chiaro, e toccandolo la si rimette al lavoro
   spento = false,
+  // il doppio turno è spezzato: due entrate e due uscite, con la pausa
+  // in mezzo che non si conta
+  spezzato = false,
   onAttiva,
   onChange,
   etichettaAria
@@ -38,7 +42,7 @@ export default function OrarioTurno({
     aperto,
     ancoraRef: triggerRef,
     popupRef,
-    altezzaStimata: ALTEZZA_POPUP,
+    altezzaStimata: spezzato ? ALTEZZA_POPUP_SPEZZATO : ALTEZZA_POPUP,
     larghezzaDesiderata: LARGHEZZA_POPUP,
     chiudi: soloChiudi
   });
@@ -104,7 +108,7 @@ export default function OrarioTurno({
             : `Orario normale del turno (${oreScritte(minuti)})`}
       >
         <span className="icona-orario" aria-hidden="true">🕒</span>
-        {orario ? `${orario.inizio}–${orario.fine}` : 'orario'}
+        {orarioScritto(orario) || 'orario'}
       </button>
 
       {aperto && !spento && pos && createPortal(
@@ -115,6 +119,8 @@ export default function OrarioTurno({
           onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); chiudi(); } }}
           style={stilePopup(pos)}
         >
+          {spezzato && <p className="titolo-parte">Pranzo</p>}
+
           <label className="campo-orario">
             <span>Entra</span>
             <input
@@ -132,6 +138,30 @@ export default function OrarioTurno({
               onChange={(e) => scrivi('fine', e.target.value)}
             />
           </label>
+
+          {spezzato && (
+            <>
+              <p className="titolo-parte">Cena</p>
+
+              <label className="campo-orario">
+                <span>Rientra</span>
+                <input
+                  type="time"
+                  value={bozza?.inizio2 || ''}
+                  onChange={(e) => scrivi('inizio2', e.target.value)}
+                />
+              </label>
+
+              <label className="campo-orario">
+                <span>Esce</span>
+                <input
+                  type="time"
+                  value={bozza?.fine2 || ''}
+                  onChange={(e) => scrivi('fine2', e.target.value)}
+                />
+              </label>
+            </>
+          )}
 
           <p className="durata-orario">
             {orarioValido(bozza)
