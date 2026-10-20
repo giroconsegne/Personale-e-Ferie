@@ -285,10 +285,24 @@ function App() {
     modificaLocale({ aperture: { ...aperture, [giorno]: valore } });
   };
 
-  const cambiaMinimo = (mansione, giorno, valore) => {
+  const cambiaMinimo = (mansione, giorno, servizio, valore) => {
     const quanti = Math.max(0, Math.min(99, parseInt(valore, 10) || 0));
+
+    // il vecchio minimo era un numero solo e valeva per la cena: alla
+    // prima modifica diventa la coppia pranzo/cena, senza perdere niente
+    const scritto = minimi[mansione]?.[giorno];
+    const adesso = typeof scritto === 'number'
+      ? { pranzo: 0, cena: scritto }
+      : { pranzo: 0, cena: 0, ...(scritto || {}) };
+
     modificaLocale({
-      minimi: { ...minimi, [mansione]: { ...(minimi[mansione] || {}), [giorno]: quanti } }
+      minimi: {
+        ...minimi,
+        [mansione]: {
+          ...(minimi[mansione] || {}),
+          [giorno]: { ...adesso, [servizio]: quanti }
+        }
+      }
     });
   };
 
@@ -576,8 +590,10 @@ function App() {
           <p>Nella settimana che stai guardando mancano delle persone:</p>
           <ul className="elenco-conflitti">
             {ammanchi.map(a => (
-              <li key={`${a.giorno}-${a.mansione}`}>
-                <strong>{GIORNI_LABEL[a.indice]}</strong> — {a.mansione}:{' '}
+              <li key={`${a.giorno}-${a.servizio}-${a.mansione}`}>
+                <strong>
+                  {GIORNI_LABEL[a.indice]}{a.dueServizi ? ` a ${a.servizio}` : ''}
+                </strong> — {a.mansione}:{' '}
                 {a.presenti} {a.presenti === 1 ? 'persona' : 'persone'} su {a.richiesti}
               </li>
             ))}

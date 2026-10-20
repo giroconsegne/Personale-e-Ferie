@@ -2736,6 +2736,32 @@ h1, h2, h3 {
   gap: 4px;
 }
 
+/* nei giorni aperti a pranzo e a cena il giorno ha due caselline,
+   una sotto l'altra, con la loro iniziale davanti */
+.minimo-campo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.minimo-servizio {
+  flex: none;
+  width: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--testo-3);
+}
+
+.minimo-giorno.doppio {
+  gap: 5px;
+}
+
+.minimo-giorno.doppio input {
+  padding: 5px 2px;
+  font-size: 13px;
+}
+
 .minimo-sigla {
   font-size: 10px;
   font-weight: 800;

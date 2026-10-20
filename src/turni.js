@@ -1,4 +1,12 @@
-import { GIORNI, TURNO_PREDEFINITO, eChiusoIlGiorno, eLavorativo, repartoDi } from './costanti';
+import {
+  GIORNI,
+  TURNO_PREDEFINITO,
+  aperturaDi,
+  comprendeIlPranzo,
+  comprendeLaCena,
+  eLavorativo,
+  repartoDi
+} from './costanti';
 import { chiaveGiorno, lunediDi } from './date';
 
 /**
@@ -120,19 +128,49 @@ export function creaLettoreMinuti(settimane, orariSettimane, predefiniti) {
 /* ---------- personale minimo ---------- */
 
 /**
- * Quante persone servono in una mansione in un certo giorno della
- * settimana. Zero (o niente) vuol dire che non è stato chiesto un minimo.
+ * I servizi da coprire in un giorno: dove si apre a pranzo e a cena sono
+ * due, e vanno guardati separatamente. Un giorno chiuso non ne ha nessuno.
  */
-export const minimoDi = (minimi, mansione, giorno) => {
-  const quanti = minimi?.[mansione]?.[giorno];
+export const serviziDelGiorno = (aperture, giorno) => {
+  const apertura = aperturaDi(aperture, giorno);
+  if (apertura === 'entrambi') return ['pranzo', 'cena'];
+  if (apertura === 'pranzo') return ['pranzo'];
+  if (apertura === 'cena') return ['cena'];
+  return [];
+};
+
+/**
+ * Quante persone servono in una mansione, in un certo giorno e per un
+ * certo servizio. Zero (o niente) vuol dire che non è stato chiesto
+ * un minimo.
+ *
+ * Prima dei giorni aperti anche a pranzo il minimo era **un numero solo**
+ * per giorno. Quel numero resta valido e vale per la cena: era l'unico
+ * servizio che c'era, e così chi aveva già i suoi minimi non se li vede
+ * cambiare sotto i piedi. Il pranzo parte da zero e lo si imposta a mano.
+ */
+export const minimoDi = (minimi, mansione, giorno, servizio = 'cena') => {
+  const scritto = minimi?.[mansione]?.[giorno];
+  const quanti = typeof scritto === 'number'
+    ? (servizio === 'cena' ? scritto : 0)
+    : scritto?.[servizio];
+
   return Number.isFinite(quanti) && quanti > 0 ? quanti : 0;
 };
 
-/** Chi lavora davvero in quella mansione, in quel giorno della settimana. */
-export function chiLavora({ dipendenti, settimane, mansioniSettimane, ferie, lunedi, giorno, data, mansione }) {
+/**
+ * Chi lavora davvero in quella mansione, in quel giorno della settimana.
+ * Con `servizio` si guarda il solo pranzo o la sola cena: chi fa il doppio
+ * turno c'è in tutti e due, chi fa solo la cena non copre il pranzo.
+ */
+export function chiLavora({ dipendenti, settimane, mansioniSettimane, ferie, lunedi, giorno, data, mansione, servizio }) {
   return dipendenti.filter(dip => {
     if ((ferie?.[dip.id] || []).includes(data)) return false;
-    if (!eLavorativo(turnoDelGiorno(turniDellaSettimana(settimane, dip.id, lunedi), giorno))) return false;
+
+    const turno = turnoDelGiorno(turniDellaSettimana(settimane, dip.id, lunedi), giorno);
+    if (!eLavorativo(turno)) return false;
+    if (servizio === 'pranzo' && !comprendeIlPranzo(turno)) return false;
+    if (servizio === 'cena' && !comprendeLaCena(turno)) return false;
 
     const sua = mansioneDelGiorno(
       mansioniDellaSettimana(mansioniSettimane, dip.id, lunedi),
@@ -162,20 +200,28 @@ export function ammanchiDellaSettimana({
   const ammanchi = [];
 
   GIORNI.forEach((giorno, i) => {
-    if (eChiusoIlGiorno(aperture, giorno)) return;
+    const servizi = serviziDelGiorno(aperture, giorno);
+    if (servizi.length === 0) return; // chiuso: non c'è niente da coprire
 
-    mansioni.forEach(mansione => {
-      const richiesti = minimoDi(minimi, mansione, giorno);
-      if (richiesti === 0) return;
+    servizi.forEach(servizio => {
+      mansioni.forEach(mansione => {
+        const richiesti = minimoDi(minimi, mansione, giorno, servizio);
+        if (richiesti === 0) return;
 
-      const presenti = chiLavora({
-        dipendenti, settimane, mansioniSettimane, ferie,
-        lunedi, giorno, data: dateSettimana[i], mansione
-      }).length;
+        const presenti = chiLavora({
+          dipendenti, settimane, mansioniSettimane, ferie,
+          lunedi, giorno, data: dateSettimana[i], mansione, servizio
+        }).length;
 
-      if (presenti < richiesti) {
-        ammanchi.push({ giorno, indice: i, data: dateSettimana[i], mansione, richiesti, presenti });
-      }
+        if (presenti < richiesti) {
+          ammanchi.push({
+            giorno, indice: i, data: dateSettimana[i], mansione, servizio,
+            richiesti, presenti,
+            // nei giorni con due servizi va detto quale, altrimenti è rumore
+            dueServizi: servizi.length > 1
+          });
+        }
+      });
     });
   });
 

@@ -823,7 +823,14 @@ export default function TurniSection({
             <p className="nota nota-avviso striscia-ammanchi">
               ⚠️ Sotto il personale minimo:{' '}
               {ammanchi
-                .map(a => `${giorniLabel[a.indice]} ${a.mansione} ${a.presenti}/${a.richiesti}`)
+                .map(a => {
+                  // «Giovedì a pranzo Sala 0/3»: dove si apre una volta
+                  // sola il servizio non serve dirlo
+                  const quando = a.dueServizi
+                    ? `${giorniLabel[a.indice]} a ${a.servizio}`
+                    : giorniLabel[a.indice];
+                  return `${quando} ${a.mansione} ${a.presenti}/${a.richiesti}`;
+                })
                 .join(' · ')}
             </p>
           )}
@@ -853,7 +860,9 @@ export default function TurniSection({
                         {scoperti.length > 0 && (
                           <span
                             className="badge-chiuso badge-minimo"
-                            title={scoperti.map(a => `${a.mansione}: ${a.presenti} su ${a.richiesti}`).join('\n')}
+                            title={scoperti
+                              .map(a => `${a.dueServizi ? `A ${a.servizio}, ` : ''}${a.mansione}: ${a.presenti} su ${a.richiesti}`)
+                              .join('\n')}
                           >
                             ⚠️ Manca gente
                           </span>
