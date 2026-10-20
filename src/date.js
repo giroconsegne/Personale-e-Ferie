@@ -1,4 +1,10 @@
-import { GIORNI, TURNO_PREDEFINITO, eLavorativo } from './costanti';
+import {
+  GIORNI,
+  TURNO_PREDEFINITO,
+  comprendeIlPranzo,
+  comprendeLaCena,
+  eLavorativo
+} from './costanti';
 
 // Le date sono stringhe "AAAA-MM-GG": niente fusi orari di mezzo.
 export const aData = (iso) => new Date(`${iso}T00:00:00`);
@@ -143,8 +149,10 @@ export function conteggiaGiorni({ dal, al, turnoDelGiorno, minutiDelGiorno, feri
         if (corrente <= oggi) {
           conta.lavorati++;
           conta.minuti += minuti;
-          if (turno === 'Mattina') conta.mattine++;
-          else conta.sere++;
+          // il doppio turno conta da tutte e due le parti: il giorno però
+          // resta uno solo, ed è quello che dice «Lavorati»
+          if (comprendeIlPranzo(turno)) conta.mattine++;
+          if (comprendeLaCena(turno)) conta.sere++;
         }
       }
     }

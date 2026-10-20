@@ -34,6 +34,9 @@
   --mattina-bg: #fdf2e0;
   --sera: #4b46c4;
   --sera-bg: #eeedfb;
+  /* il doppio turno: un verde che non si confonde né col pranzo né con la cena */
+  --doppio: #2f7d4f;
+  --doppio-bg: #e8f4ed;
   --riposo: #77706a;
   --riposo-bg: #f0edea;
   --vuoto: #a9a199;
@@ -541,6 +544,7 @@ h1, h2, h3 {
 
 .legenda-voce.turno-mattina .punto { background: var(--mattina); }
 .legenda-voce.turno-sera .punto { background: var(--sera); }
+.legenda-voce.turno-entrambi .punto { background: var(--doppio); }
 .legenda-voce.turno-riposo .punto { background: var(--riposo); }
 .legenda-voce.turno-vuoto .punto { background: transparent; border: 1px dashed var(--border-forte); }
 
@@ -1132,6 +1136,12 @@ h1, h2, h3 {
   border-color: #dbd9f6;
 }
 
+.pillola.turno-entrambi {
+  background: var(--doppio-bg);
+  color: var(--doppio);
+  border-color: #cfe4d8;
+}
+
 .pillola.turno-riposo {
   background: var(--riposo-bg);
   color: var(--riposo);
@@ -1225,6 +1235,7 @@ h1, h2, h3 {
 
 .punto-opzione.turno-mattina { background: var(--mattina); }
 .punto-opzione.turno-sera { background: var(--sera); }
+.punto-opzione.turno-entrambi { background: var(--doppio); }
 .punto-opzione.turno-riposo { background: var(--riposo); }
 .punto-opzione.turno-vuoto { background: transparent; border: 1px dashed var(--border-forte); }
 .punto-opzione.mansione { background: var(--rep-punto); }
@@ -2673,6 +2684,7 @@ h1, h2, h3 {
 
 .gruppo-turno.turno-mattina .punto { background: var(--mattina); }
 .gruppo-turno.turno-sera .punto { background: var(--sera); }
+.gruppo-turno.turno-entrambi .punto { background: var(--doppio); }
 .gruppo-turno.turno-riposo .punto { background: var(--riposo); }
 .gruppo-turno.gruppo-ferie .punto { background: var(--ferie); }
 
@@ -3713,6 +3725,7 @@ tr:hover .btn-invia,
 
   .turno-stampa.turno-mattina { color: var(--mattina); }
   .turno-stampa.turno-sera { color: var(--sera); }
+  .turno-stampa.turno-entrambi { color: var(--doppio); }
   .turno-stampa.turno-riposo { color: var(--riposo); }
   .turno-stampa.turno-vuoto { color: var(--vuoto); }
 
@@ -3927,13 +3940,14 @@ tr:hover .btn-invia,
   /* il colore del turno resta, così pranzo e cena si distinguono a occhio */
   .orario-turno.turno-mattina { color: var(--mattina); }
   .orario-turno.turno-sera { color: var(--sera); }
+  .orario-turno.turno-entrambi { color: var(--doppio); }
 
   /* Orario e mansione sulla stessa riga. Incolonnati raddoppiano
      l'altezza di ogni riga, e su diciassette persone vuol dire stampare
      tutto molto più piccolo per far stare il foglio in una pagina:
      affiancati si passa dal 66% all'86%, cioè caratteri di un terzo
      più grandi. A schermo restano incolonnati, che si legge meglio. */
-  .casella-turno.con-orario {
+  .casella-turno {
     flex-direction: row;
     /* non si separano: le colonne ormai hanno lo spazio per tenerli
        sulla stessa riga, e una mansione andata a capo sballava
@@ -3948,7 +3962,7 @@ tr:hover .btn-invia,
     gap: 0 6px;
   }
 
-  .casella-turno.con-orario .riga-mansione {
+  .casella-turno .riga-mansione {
     display: inline-block;
   }
 

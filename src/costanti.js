@@ -13,8 +13,8 @@ export const LOCALI = [
   // `orari`: se la pizzeria segna l'entrata e l'uscita di ognuno. Dove non
   // serve, la casella resta quella semplice con Pranzo, Cena e Riposo.
   // È solo il punto di partenza: poi si accende e si spegne da Impostazioni.
-  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Mattina', 'Sera', 'Riposo', ''], orari: false },
-  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Riposo', ''], orari: true }
+  { id: 'dauria', nome: "Fratelli D'Auria", turni: ['Mattina', 'Sera', 'Entrambi', 'Riposo', ''], orari: false },
+  { id: 'pomodoro', nome: 'Pomodoro e Mozzarella', turni: ['Mattina', 'Sera', 'Entrambi', 'Riposo', ''], orari: true }
 ];
 
 /** I turni che si possono scegliere in una pizzeria. */
@@ -73,6 +73,9 @@ export const mansioneGiaPresente = (mansioni, nome) =>
 export const TURNI = [
   { valore: 'Mattina', etichetta: 'Pranzo', classe: 'turno-mattina' },
   { valore: 'Sera', etichetta: 'Cena', classe: 'turno-sera' },
+  // il doppio turno: si può scegliere solo nei giorni aperti a tutti e due.
+  // `sigla` serve al foglio del mese, dove le caselle sono minuscole.
+  { valore: 'Entrambi', etichetta: 'Pranzo e cena', sigla: 'P+C', classe: 'turno-entrambi' },
   { valore: 'Riposo', etichetta: 'Riposo', classe: 'turno-riposo' },
   { valore: '', etichetta: 'Non previsto', breve: '—', classe: 'turno-vuoto' }
 ];
@@ -102,11 +105,18 @@ export const etichettaTurno = (valore) =>
  */
 export const etichettaCasella = (valore) => {
   const turno = TURNI.find(t => t.valore === valore);
-  return turno?.breve ?? turno?.etichetta ?? 'Non previsto';
+  return turno?.sigla ?? turno?.breve ?? turno?.etichetta ?? 'Non previsto';
 };
 
 // Un turno vale come giorno di lavoro solo se non è riposo né "non previsto"
-export const eLavorativo = (turno) => turno === 'Mattina' || turno === 'Sera';
+export const eLavorativo = (turno) =>
+  turno === 'Mattina' || turno === 'Sera' || turno === 'Entrambi';
+
+/** true se quel turno comprende il pranzo (il doppio turno comprende tutto). */
+export const comprendeIlPranzo = (turno) => turno === 'Mattina' || turno === 'Entrambi';
+
+/** true se quel turno comprende la cena. */
+export const comprendeLaCena = (turno) => turno === 'Sera' || turno === 'Entrambi';
 
 /**
  * Quando è aperta la pizzeria, giorno per giorno della settimana.
@@ -114,7 +124,7 @@ export const eLavorativo = (turno) => turno === 'Mattina' || turno === 'Sera';
  * nemmeno scegliere.
  */
 export const APERTURE = [
-  { valore: 'entrambi', etichetta: 'Pranzo e cena', breve: 'Pranzo e cena', turni: ['Mattina', 'Sera'] },
+  { valore: 'entrambi', etichetta: 'Pranzo e cena', breve: 'Pranzo e cena', turni: ['Mattina', 'Sera', 'Entrambi'] },
   { valore: 'pranzo', etichetta: 'Solo pranzo', breve: 'Solo pranzo', turni: ['Mattina'] },
   { valore: 'cena', etichetta: 'Solo cena', breve: 'Solo cena', turni: ['Sera'] },
   { valore: 'chiuso', etichetta: 'Chiuso', breve: 'Chiuso', turni: [] }
