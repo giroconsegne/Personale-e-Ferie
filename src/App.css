@@ -2736,8 +2736,12 @@ h1, h2, h3 {
   gap: 4px;
 }
 
-/* nei giorni aperti a pranzo e a cena il giorno ha due caselline,
-   una sotto l'altra, con la loro iniziale davanti */
+/* Quando in settimana si apre anche a pranzo, ogni giorno ha le due
+   righe P e C — anche sabato e domenica, che a pranzo sono spenti. Serve
+   a tenere tutte le caselle della stessa misura e incolonnate: con la
+   riga in più solo dove c'era il pranzo, le caselle dei giorni di sola
+   cena venivano più larghe (niente letterina da scavalcare) e più in
+   alto. La letterina occupa sempre lo stesso spazio, da tutte le parti. */
 .minimo-campo {
   display: flex;
   align-items: center;
@@ -2747,9 +2751,10 @@ h1, h2, h3 {
 
 .minimo-servizio {
   flex: none;
-  width: 10px;
+  width: 9px;
   font-size: 10px;
   font-weight: 800;
+  text-align: center;
   color: var(--testo-3);
 }
 
@@ -2757,9 +2762,26 @@ h1, h2, h3 {
   gap: 5px;
 }
 
-.minimo-giorno.doppio input {
-  padding: 5px 2px;
+/* La casella e il trattino che ne prende il posto: stessa larghezza e
+   stessa altezza, imposte a mano. Lasciando decidere al contenuto il
+   trattino veniva 30px e la casella 36, e le righe si sfalsavano. */
+.minimo-campo input,
+.minimo-spento {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 2px;
   font-size: 13px;
+  text-align: center;
+}
+
+.minimo-spento {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-sm);
+  color: var(--border-forte);
+  font-weight: 700;
 }
 
 .minimo-sigla {
@@ -2770,7 +2792,7 @@ h1, h2, h3 {
   color: var(--testo-3);
 }
 
-.minimo-giorno input {
+.griglia-minimi input {
   width: 100%;
   min-width: 0;
   padding: 7px 2px;
@@ -2784,7 +2806,7 @@ h1, h2, h3 {
   color: var(--testo);
 }
 
-.minimo-giorno input:focus {
+.griglia-minimi input:focus {
   outline: none;
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand-chiaro);

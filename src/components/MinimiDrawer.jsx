@@ -13,7 +13,18 @@ import { minimoDi, serviziDelGiorno } from '../turni';
  * per giorno. Zero vuol dire "nessun minimo": è il valore di partenza,
  * così chi non usa questa cosa non se ne accorge nemmeno.
  */
+const SERVIZI = [
+  { nome: 'pranzo', lettera: 'P' },
+  { nome: 'cena', lettera: 'C' }
+];
+
 export default function MinimiDrawer({ mansioni, minimi, aperture, quantiNellaMansione, cambiaMinimo, chiudi }) {
+  // Se in settimana c'è anche un solo giorno aperto a pranzo e a cena,
+  // tutti i giorni mostrano le due righe P e C: dove il servizio non c'è
+  // resta una casella spenta, così le caselle restano tutte uguali e
+  // incolonnate. Se non si apre mai a pranzo, una casella per giorno.
+  const settimanaDoppia = GIORNI.some(g => serviziDelGiorno(aperture, g).length > 1);
+
   return (
     <>
       <div className="drawer-overlay" onClick={chiudi} />
@@ -46,39 +57,60 @@ export default function MinimiDrawer({ mansioni, minimi, aperture, quantiNellaMa
 
                 <div className="griglia-minimi">
                   {GIORNI.map((giorno, i) => {
-                    // un giorno aperto a pranzo e a cena ha due minimi
                     const servizi = serviziDelGiorno(aperture, giorno);
-                    const doppio = servizi.length > 1;
+
+                    // la settimana senza pranzi resta com'era: una casella
+                    if (!settimanaDoppia) {
+                      return (
+                        <label key={giorno} className={`minimo-giorno ${servizi.length === 0 ? 'chiuso' : ''}`}>
+                          <span className="minimo-sigla">{GIORNI_SIGLA[i]}</span>
+                          {servizi.length === 0 ? (
+                            <span className="minimo-chiuso" title={`${GIORNI_LABEL[i]}: pizzeria chiusa`}>—</span>
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              inputMode="numeric"
+                              value={minimoDi(minimi, mansione, giorno, 'cena')}
+                              onChange={(e) => cambiaMinimo(mansione, giorno, 'cena', e.target.value)}
+                              aria-label={`${mansione}, ${GIORNI_LABEL[i]}`}
+                            />
+                          )}
+                        </label>
+                      );
+                    }
 
                     return (
-                      <div
-                        key={giorno}
-                        className={`minimo-giorno ${servizi.length === 0 ? 'chiuso' : ''} ${doppio ? 'doppio' : ''}`}
-                      >
+                      <div key={giorno} className={`minimo-giorno doppio ${servizi.length === 0 ? 'chiuso' : ''}`}>
                         <span className="minimo-sigla">{GIORNI_SIGLA[i]}</span>
 
-                        {servizi.length === 0 ? (
-                          <span className="minimo-chiuso" title={`${GIORNI_LABEL[i]}: pizzeria chiusa`}>—</span>
-                        ) : (
-                          servizi.map(servizio => (
-                            <label key={servizio} className="minimo-campo">
-                              {doppio && (
-                                <span className="minimo-servizio" aria-hidden="true">
-                                  {servizio === 'pranzo' ? 'P' : 'C'}
-                                </span>
-                              )}
+                        {SERVIZI.map(({ nome, lettera }) => (
+                          <label key={nome} className="minimo-campo">
+                            <span className="minimo-servizio" aria-hidden="true">{lettera}</span>
+
+                            {servizi.includes(nome) ? (
                               <input
                                 type="number"
                                 min="0"
                                 max="99"
                                 inputMode="numeric"
-                                value={minimoDi(minimi, mansione, giorno, servizio)}
-                                onChange={(e) => cambiaMinimo(mansione, giorno, servizio, e.target.value)}
-                                aria-label={`${mansione}, ${GIORNI_LABEL[i]}${doppio ? `, ${servizio}` : ''}`}
+                                value={minimoDi(minimi, mansione, giorno, nome)}
+                                onChange={(e) => cambiaMinimo(mansione, giorno, nome, e.target.value)}
+                                aria-label={`${mansione}, ${GIORNI_LABEL[i]}, ${nome}`}
                               />
-                            </label>
-                          ))
-                        )}
+                            ) : (
+                              <span
+                                className="minimo-spento"
+                                title={servizi.length === 0
+                                  ? `${GIORNI_LABEL[i]}: pizzeria chiusa`
+                                  : `${GIORNI_LABEL[i]}: a ${nome} non si apre`}
+                              >
+                                —
+                              </span>
+                            )}
+                          </label>
+                        ))}
                       </div>
                     );
                   })}
